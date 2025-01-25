@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "jsbarcode": "^3.11.6",
+    "jspdf": "^2.5.1",
+    "mysql2": "^3.11.5",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "pdfjs-dist": "^4.4.168"
+  }
+}

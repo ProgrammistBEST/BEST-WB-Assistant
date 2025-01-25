@@ -1,0 +1,63 @@
+.containerONLYFORGAME {
+    max-width: 600px;
+    margin: 50px auto;
+    min-width: 600px;
+}
+
+.score-containerONLYFORGAME {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.game-containerONLYFORGAME {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    border: 2px solid #333;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.shoeONLYFORGAME {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-image: url('../img/box1.png'); /* Укажите правильный путь к картинке */
+    background-size: cover; /* Обеспечивает, что картинка заполняет блок */
+    background-position: center; /* Центрирует картинку внутри блока */
+    background-repeat: no-repeat; /* Не повторяет картинку */
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.5s, opacity 0.5s; /* Анимация для уменьшения и исчезновения */
+}
+.super-shoeONLYFORGAME {
+    background-color: gold;  /* Золотой цвет для супер коробки */
+    width: 60px;  /* Можно сделать немного больше обычных */
+    height: 60px;
+    border-radius: 15px;
+}
+
+.hiddenONLYFORGAME {
+    display: none;
+}
+
+#gameOverONLYFORGAME {
+    margin-top: 20px;
+}
+
+.end-messageONLYFORGAME {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 24px;
+    text-align: center;
+    z-index: 1000;
+    opacity: 0;
+}

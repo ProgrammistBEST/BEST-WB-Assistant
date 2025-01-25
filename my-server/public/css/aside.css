@@ -1,0 +1,487 @@
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;   
+}
+.PostToDelivery {
+    z-index: 1;
+    position: absolute;
+    left: 102%;
+    top: 1px;
+    height: 610px;
+    width: 2px;
+    background-color: var(--color-primary);
+    text-align: center;
+    margin: 0 auto;
+    transition: 0.3s;
+    border-radius: 10px;
+}
+
+.SectionForBar {
+    margin: 0 auto;
+    text-align: center;
+    width: 80%;
+}
+.buttonInAsideForPost{
+    font-size: 12px;
+    transition: 1s;
+    text-align: center;
+    border: none;
+    width: 85%;
+    height: 35px;
+    background-color: var(--color-active-button);
+    margin-bottom: 15px;
+    transition: 1s;
+    border-radius: 10px;
+}
+.buttonInAsideForPost:hover {
+    background-color: var(--color-active-button);
+    color: var(--color-middle);
+}
+.GifForDelivery {
+    position: relative;
+    left: -10px;
+}
+.offAside {
+    width: 0px;
+}
+.progress-bar-model, .progress-bar-order{
+    border-radius: 10px;
+}
+.progress-fill-model, .progress-fill-order {
+    border-radius: 10px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.labelForBar {
+    margin-bottom: 0px;
+    font-size: 12px;
+}
+
+.burger {
+    padding: 15px 15px;
+    display: inline-block;
+    transition-property: opacity, filter;
+    transition-duration: 0.15s;
+    transition-timing-function: linear;
+    font: inherit;
+    color: inherit;
+    text-transform: none;
+    background-color: transparent;
+    border: 0;
+    margin: 0;
+    overflow: visible;
+}
+
+.burger:hover {
+    opacity: 0.7;
+}
+
+.burger.active:hover {
+    opacity: 0.7;
+}
+
+.burger.active .burgerInner,
+.burger.active .burgerInner::before,
+.burger.active .burgerInner::after {
+    background-color: var(--color-font-middle);
+}
+
+.burgerBox {
+    width: 40px;
+    height: 24px;
+    display: inline-block;
+    position: relative;
+}
+
+.burgerInner {
+    display: block;
+    top: 50%;
+    margin-top: -2px;
+}
+
+.burgerInner,
+.burgerInner::before,
+.burgerInner::after {
+    width: 40px;
+    height: 4px;
+    background-color: var(--color-font-middle);
+    border-radius: 4px;
+    position: absolute;
+    transition-property: transform;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+}
+
+.burgerInner::before,
+.burgerInner::after {
+    content: "";
+    display: block;
+}
+
+.burgerInner::before {
+    top: -10px;
+}
+
+.burgerInner::after {
+    bottom: -10px;
+}
+
+.burgerSlider .burgerInner {
+    top: 2px;
+}
+
+.burgerSlider .burgerInner::before {
+    top: 10px;
+    transition-property: transform, opacity;
+    transition-timing-function: ease;
+    transition-duration: 0.15s;
+}
+
+.burgerSlider .burgerInner::after {
+    top: 20px;
+}
+
+.burgerSlider.active .burgerInner {
+    transform: translate3d(0, 10px, 0) rotate(45deg);
+}
+
+.burgerSlider.active .burgerInner::before {
+    transform: rotate(-45deg) translate3d(-5.71429px, -6px, 0);
+    opacity: 0;
+}
+
+.burgerSlider.active .burgerInner::after {
+    transform: translate3d(0, -20px, 0) rotate(-90deg);
+}
+#infoAboutCountBoxes {
+    font-size: 13px;
+    margin-top: 10px;
+}
+.container .my-4{
+    font-size: 15px;
+    margin-top: 2px !important;
+    margin-bottom: 4px !important;
+    text-align: center;
+}
+.AddingKyzFromUsersFile {
+    margin: 0 auto;
+    height: 15px;
+    margin-top: 15px;
+    background-color: var(--color-background);
+    border: 2px solid var(--color-primary);
+    border-radius: 15px;
+    width: 25%;
+}
+
+.AddingKyzFromUsersFile .container {
+    padding: 0px;
+}
+.container .list-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container .list-group .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 50%;
+    padding: 2px;
+    padding-left: 11px;
+    padding-right: 11px;
+    height: 22px;
+}
+
+.container .list-group .list-group-item .size-span {
+    font-size: 10px;
+}
+
+.container .list-group .list-group-item .quantity-span {
+    font-size: 10px;
+}
+.carousel {
+    width: 100%;
+}
+.openAreaKyz {
+    width: 100%;
+    height: 60%;
+}
+.openAreaKyz .container {
+    display: block;
+    opacity: 1;
+    z-index: -1;
+    border-radius: 15px;
+}
+.closeAreaKyz {
+    cursor: pointer;
+}
+.closeAreaKyz .container {
+    z-index: 2;
+}
+.closeAreaKyzButton {
+    transition: 0.5s;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    width: 100%;
+    height: 6%;
+}
+.carousel-control-next-icon {
+    background-image: url(https://img.icons8.com/?size=100&id=22230&format=png&color=C4E5FF);
+}
+.carousel-control-prev-icon {
+    background-image: url(https://img.icons8.com/?size=100&id=22230&format=png&color=C4E5FF);
+    rotate: 180deg;
+}
+.textdopInfoAboutCountKYZ {
+    font-size: 10px;
+    margin-top: 13px;
+    float: inline-end;
+}
+.file-upload-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 80%;
+    left: 12px;
+    height: 43px;
+}
+input[type="file"] {
+    z-index: -1;
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    opacity: 0;
+    cursor: pointer;
+}
+label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-middle);
+    color: var(--color-font-middle);
+    padding: 7px 7px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: -1;
+    width: 50%;
+    height: 35px;
+    font-size: 11px;
+    margin-left: 77px;
+}
+label:hover {
+    background-color: var(--color-active-button);
+    color: var(--color-font-primary);
+}
+.ButtonAddNewKYZ {
+    transition: background-color 0.3s;
+    font-size: 11px;
+    width: 50%;
+    height: 35px;
+    position: relative;
+    top: -43px;
+    left: -53px;
+    border: none;
+    background-color: var(--color-middle);
+    border-radius: 5px
+    ;
+}
+
+.ButtonAddNewKYZ:hover {
+    background-color: var(--color-active-button);
+    color: var(--color-font-primary);
+}
+.inputForDelivery {
+    border: none;
+    border-radius: 5px;
+    width: 111px;
+    height: 24px;
+    overflow: visible;
+    padding: 10px;
+    font-size: 9px;
+    text-align: center;
+    margin-top: 11px;
+}
+.sectionforbuttonsChangeNameDelivery {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 15px;
+}
+.buttonForChangeNameDelivery {
+    width: 50px;
+    height: 15px;
+    border: none;
+    background-color: var(--color-middle);
+    font-size: 10px;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+.buttonForChangeNameDelivery:hover {
+    background-color: var(--color-hover-button);
+    transition: 0.3s;
+}
+.buttonForChangeNameDelivery:active {
+    background-color: var(--color-active-button);
+}
+.AddingKyzFromUsersFile .container{
+    margin: 0;
+}
+.BoxforchangeVariantForZIP {
+    gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr;
+    display: grid;
+    margin: 0px;
+    margin-top: 15px;
+}
+.changeVariantForZIP {
+    height: 25px;
+    font-size: 13px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--color-middle);
+    transition: background-color ease 0.3s;
+}
+.changeVariantForZIP {
+    background-color: var(--color-middle);
+    transition: background-color ease 0.3s;
+}
+.changeVariantForZIP:hover {
+    background-color: var(--color-hover-button);
+}
+.MaxchangeVariantForZIP {
+    font-size: 0.9vh;
+}
+.aside {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    background-color: var(--color-primary);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+}
+.aside.open {
+    transform: translateY(0);
+}
+.side-panel {
+    padding: 20px;
+    padding-bottom: 0px;
+    padding-top: 0px;
+}
+.side-panel-Mainlabel {
+    font-size: 18px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+.buttonInAsideForPost {
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--color-middle);
+    color: var(--color-font-middle);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+.labelForBar {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
+.progress-bar-order, .progress-bar-model {
+    width: 100%;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.progress-fill-order, .progress-fill-model {
+    width: 0%;
+    height: 100%;
+    background-color: #78b9ff;
+    border-radius: 5px 0 0 5px;
+}
+.inputForDelivery {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+.sectionforbuttonsChangeNameDelivery {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+.buttonForChangeNameDelivery {
+    flex: 1;
+    padding: 8px;
+    margin-right: 5px;
+    background-color: var(--color-middle);
+    color: var(--color-font-middle);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+    height: 30px;
+}
+
+.buttonForChangeNameDelivery:hover {
+    background-color: var(--color-hover-button);
+}
+
+/* Стили для меню-кнопки */
+.menu-button {
+    position: relative;
+    background-color: var(--color-primary);
+    color: var(--color-font-middle);
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease;
+    bottom: 27px;
+    left: 117px;
+}
+
+.menu-button:hover {
+    background-color: var(--color-hover-button);
+}
+
+.menu-arrow {
+    margin-right: 8px;
+}
+
+.menu-text {
+    font-size: 14px;
+}
+.areaforSizeAndModelKyz {
+    display: none;
+}

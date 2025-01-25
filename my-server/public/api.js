@@ -1,0 +1,27 @@
+// функция для получения API tokens
+const getApiById = async (id, company_name, category) => {
+    try {
+      console.log(`Запрос токена для id=${id}, company_name=${company_name}, category=${category}`);
+      const response = await fetch(
+        `http://localhost:3000/getApiById?id=${id}&company_name=${company_name}&category=${category}`
+      );
+  
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error(`Ошибка получения токена: ${response.status} ${errorDetails}`);
+        throw new Error(`HTTP error ${response.status}`);
+      }
+  
+      const data = await response.json();
+    //   console.log('Ответ от сервера:', data);
+  
+      if (!data.token) {
+        throw new Error(`Токен отсутствует в ответе: ${JSON.stringify(data)}`);
+      }
+  
+      return data.token;
+    } catch (err) {
+      console.error('Ошибка выполнения getApiById:', err.message);
+      throw err; // Повторно выбрасываем ошибку для обработки выше
+    }
+  };

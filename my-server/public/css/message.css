@@ -1,0 +1,153 @@
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;   
+}
+#success-message {
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transition: 0.5s;
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-middle);
+}
+#success-message .text-message {
+    height: 100%;
+    width: 100%;
+    word-wrap: break-word;
+}
+#success-message .text-message p {
+    margin: 8px;
+}
+#success-message .message{
+    width: 250px;
+    text-align: center;
+    height: fit-content;
+    background-color: var(--color-primary);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: 1s;
+}
+.loader {
+    border: 15px solid #f3f3f3;
+    border-top: 15px solid var(--color-active-button);
+    border-radius: 50%;
+    width: 60px;
+    margin: 0 auto;
+    height: 60px;
+    animation: spin 2s cubic-bezier(0.97, -0.05, 0.57, 1.13) infinite;    
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+#loadscreen {
+    display: none;
+    opacity: 0;
+    transition: 0.5s;
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-primary);
+    z-index: 999;
+}
+.loadscreenText {
+    text-align: center;
+    font-size: 40px;
+    position: relative;
+    top: -155px;
+    color:  var(--color-active-button);
+}
+.loadscreenbox > .loader {
+    width: 250px;
+    height: 250px; 
+}
+#accept-block {
+    position: fixed; /* Фиксированное позиционирование */
+    width: 100%; /* Ширина блока */
+    height: 100%; /* Высота блока */
+    background-color: rgb(255, 255, 255);
+    /* Центрирование */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    display: none;
+    opacity: 0;
+    transition: 0.5s;
+    justify-content: center;
+    align-items: center;    
+    background-color: var(--color-middle);
+}
+#accept-block .message{
+    width: 250px;
+    text-align: center;
+    height: 150px;
+    background-color: var(--color-primary);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 10px;
+    transition: 1s;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+#accept-block .message button {
+    width: 60px;
+    height: 50px;
+    border: none;
+    background-color: var(--color-middle);
+    border-radius: 5px;
+    transition: 0.3s;
+    font-size: 21px;
+    margin-top: 10px;
+}
+
+#accept-block .message button:hover {
+    font-size: 24px;
+    transition: 0.3s;
+    width: 110px;
+    height: 60px;
+    background-color: var(--color-hover-button);
+    color: var(--color-font-primary);
+
+}
+#accept-block .message button:active {
+    width: 105px;
+    height: 55px;
+    background-color: var(--color-active-button);
+    transition: 0.1s;
+}
+.exclamation_point_module {
+    z-index: 999;
+    display: none;
+    left: 330px;
+    top: -2px;
+    position: relative;
+}

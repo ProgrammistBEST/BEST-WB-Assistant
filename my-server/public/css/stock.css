@@ -1,0 +1,185 @@
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;   
+}
+.stockes {
+    display: flex;
+    flex-direction: column;
+}
+.stock {
+    background-color: var(--color-middle);
+    width: 300%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    border: 2px dashed var(--color-primary);
+    padding-bottom: 20px;
+    width: 100%;
+    min-width: 200px;
+    min-height: 89px;
+    height: 100%;
+    row-gap: 10px;
+    position: relative;
+}
+
+.stock::after {
+    content: "";
+    grid-column: span 4;
+    visibility: hidden;
+}
+
+
+.stock::before {
+    content: 'Склад';
+    height: 19px;
+    font-size: 13px;
+    position: absolute;
+    top: 33px;
+    left: 97%;
+    rotate: 90deg;
+    background-color: var(--color-middle);
+    padding: 0 5px;
+    font-weight: bold;
+}
+#stock-first::before {
+    content: 'Уксусный';
+    color: var(--color-font-middle);
+    background-color: var(--color-primary);
+}
+#stock-second::before {
+    content: 'Галошный';
+    color: var(--color-font-middle);
+    background-color: var(--color-primary);
+}
+#stock-third::before {
+    content: 'Обычный';
+    color: var(--color-font-middle);
+    background-color: var(--color-primary);
+}
+#LeftoversArea {
+    display:flex;
+    flex-direction: column;
+    padding-bottom: 0px;
+    position: sticky;
+    width: 335px;
+    top: 38px;
+    left: 14px;
+}
+#LeftoversArea::before {
+    content: 'Остатки';
+    position: absolute;
+    top: -30px; /* Позиционируем над контейнером */
+    left: -2px;
+    rotate: 0deg;
+    border: 2px dashed var(--color-primary);
+    padding: 0 5px;
+    /* font-weight: 400; */
+    width: 300px;
+    text-align: center;
+    height: 30px;
+    font-size: 15px;
+}
+.deleteBox {
+    position: absolute;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 25px;
+    height: 25px;
+    background-color: var(--color-middle);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 4px 6px var(--color-middle);
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.deleteBox:hover {
+    background-color: var(--color-middle);
+    transform: scale(1.1);
+}
+.deleteBox:active {
+    background-color: var(--color-middle);
+    transform: scale(0.9);
+    box-shadow: 0 2px 4px var(--color-middle);
+}
+.deleteBoxButton {
+    font-size: 15px;
+    color: var(--color-font-middle);
+    transition: transform 0.3s;
+    border: none;
+    font-weight: 700;
+    background: none;
+}
+.deleteBox:active .deleteBoxButton {
+    transform: rotate(20deg);
+}
+.stock > .Boxtransferredfordelivery > .UlForAreaLeftovers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+}
+.firstStock {
+    margin-bottom: 10px;
+}
+.secondStock {
+    margin-bottom: 10px;
+}
+.StockArea {
+    font-size: 50%;
+    margin: 0;
+    position: relative;
+    left: 78%;
+    top: -12px;
+    width: 16%;
+}
+.Itemsinbox {
+    font-size: 50%;
+    margin-left: 14px;
+}
+.maxItemsinbox {
+    font-size: 50%;
+    margin-left: 14px;
+}
+.card-body {
+    font-size: 10px;
+}
+.delivery-info-article {
+    margin-top: 40px;
+}
+.btn-primary {
+    background-color: var(--color-primary);
+    border: none;
+    color: var(--color-font-middle);
+}
+.btn-primary:hover {
+    background-color: var(--color-hover-button);
+}
+.eveningstockes {
+    display: none;
+}
+.leftoversstockes {
+    display: none;
+}
+.buttonforCounterBoxAndItems {
+    border: none;
+    position: relative;
+    height: 35px;
+    width: 42px;
+    left: 323px;
+    font-size: 12px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    font-size: 28px;
+    transition: 0.3s;
+    flex-direction: column;
+    background-color: var(--color-primary);
+    margin: 8px;
+    border-radius: 10px;
+}

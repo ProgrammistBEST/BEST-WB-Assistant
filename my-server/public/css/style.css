@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    cursor: url(../img/cursor.png) 2 2, default;
+    font-weight: 600;
+    /* border: 1px red solid; */
+}
+button:focus {
+    outline: none;
+}
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;
+    --edit-mode-primary: #ffdda2;
+}
+body {
+    /* background: url('../img/bg.png'); */
+    font-weight: 00;
+    display: flex;
+    font-family: "Noto Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    /* align-items: center;
+    justify-content: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;  */ 
+}
+a{
+    color: var(--color-font-primary)
+}
+ul {
+    margin-bottom: -1px;
+}
+.container {
+    background-color: var(--color-additional);
+    padding: 10px 20px 0px 20px;
+    border-radius: 10px;
+    padding-top: 40px;
+    width: 100%;
+    height: 100%;
+    margin-left: 19%;
+}
+nav {
+    border-radius: 1px;
+    background-color: var(--color-middle);
+}
+.keyFontPrim:hover {
+    color: var(--color-font-primary) !important;
+}
+.nav-link {
+    color: var(--color-font-middle);
+    transition: 0.5s;
+    font-size: 20px;
+    background-color: var(--color-primary);
+}
+.nav-link:hover {
+    background-color: var(--color-hover-button);
+    transition: 0.5s;
+    color: var(--color-font-primary);
+}
+.nav-link:active {
+    background-color: var(--color-active-button);
+    transition: 0.1s;
+}
+.nav-link::after {
+	content: "";
+    display: block;
+    position: relative;
+    left: 0;
+    bottom: -3px;
+    width: 0;
+    height: 2px; 
+    background-color: var(--color-pseudo-element);
+    transition: width 0.5s;
+}
+.nav-link:hover.nav-link::after {
+	content: "";
+    width: 100%;
+    display: block;
+    position: relative;
+    left: 0;
+    bottom: -3px;
+    height: 2px;
+    background-color: var(--color-pseudo-element);
+    transition: width 0.5s; 
+}
+.MainUl {
+    display: flex;
+    justify-content: center;
+    text-decoration: none;
+    list-style: none;
+    padding-left: 0;
+}
+.boxElem {
+    background-color: var(--color-background);
+    border-radius: 5px;
+    margin: 30px;
+    transition: 0.5s;
+}
+.boxElem:hover {
+    background-color: var(--color-middle);
+    transition: 0.5s;
+}
+.labelforh2 {
+    position: relative;
+    top: -50px;
+    left: 110px;
+    width: 45%;
+    font-weight: 300;
+    height: 35px;
+    text-align: center;
+    background-color: var(--color-middle);
+}
+.listOrders {
+    height: 200px;
+    width: 98%;
+    margin-top: 10px;
+    /* border: 3px solid rgb(198, 198, 198);
+    border-radius: 10px; */
+}
+.updateBD {
+    border-radius: 10px;
+    border: none;
+    width: 300px;
+    height: 50px;
+    text-align: center;
+    font-size: 30px;
+    margin-right: 5px;
+    outline: none;
+    transition: 0.5s;
+    background-color: var(--color-primary);
+}
+.boxForButtonIpdate {
+    margin-bottom: 50px;
+    margin-top: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.updateBD:hover {
+    color: var(--color-font-primary);
+    cursor: pointer;
+    transition: 0.5s;
+    background-color: var(--color-hover-button);
+}
+.navbar-nav .dropdown-menu {
+    display: none;
+    position: absolute;
+    background-color: #f8f9fa;
+    min-width: 160px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+.navbar-nav .dropdown:hover .dropdown-menu {
+    display: block;
+}
+.dropdown-item {
+    padding: 10px 20px;
+    text-decoration: none;
+    display: block;
+}
+.dropdown-item:hover {
+    background-color: #ddd;
+}
+.navbar-brand::after {
+    position: absolute;
+    left: 78px;
+    top: 52px;
+    font-size: 17px;
+    color: var(--color-font-middle);
+}
+.brand-1::after {
+    content: 'Armbest';
+}
+.brand-2::after {
+    content: 'Best26';
+}
+.brand-3::after {
+    content: 'BestShoes';
+}
+.bpxelem {
+    user-select: none; /* Запрещает выделение текста внутри элемента */
+}
+.helpInfo {
+    position: absolute;
+    left: -50px;
+    width: 26px;
+    height: 26px;
+    text-align: center;
+    background: var(--color-primary);
+    border-radius: 9px;
+    transition: 0.4s;
+}
+.helpInfo:hover {
+    background-color: var(--color-hover-button);
+    transition: 0.4s;
+}
+.sectionforhelpInfo {
+    width: 186px;
+    height: 170px;
+    opacity: 0;
+    background: var(--color-primary);
+    position: relative;
+    left: -162px;
+    transition: 0.4s;
+    top: -22px;
+    z-index: -1;
+}
+.helpInfo:hover > .sectionforhelpInfo {
+    opacity: 1;
+    transition: 0.4s;
+}
+.ul-sectionforhelpInfo {
+    list-style: none;
+    padding: 7px;
+}
+.li-sectionforhelpInfo {
+    font-size: 10px;
+}
+.headli-sectionforhelpInfo {
+    font-size: 15px;
+    font-weight: 800;
+}
+.stickerAreaorderId {
+    font-size: 10px;
+    margin-bottom: 0;
+}
+.listOrders .stickerAreaorderId::before {
+    content: 'Стик ';
+    font-size: 10px;
+    font-weight: 400;
+}
+.infoAboutNameDelivery {
+    font-size: 12px;
+    position: absolute;
+    top: 57px;
+    left: 164px;
+}

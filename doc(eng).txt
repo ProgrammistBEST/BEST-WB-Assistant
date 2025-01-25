@@ -1,0 +1,116 @@
+Project Documentation
+Overview
+This project is a Node.js server application that interacts with an SQLite database. The server provides several endpoints to manage product sizes, including adding, updating, deleting, and retrieving data from the database. The project uses the Express framework to handle HTTP requests and the sqlite3 library to interact with the SQLite database.
+
+Project Structure
+package.json: Contains metadata about the project, including dependencies and scripts.
+package-lock.json: Describes the dependency tree for the project.
+server.js: Main server file containing the server logic and routes.
+products.db: SQLite database file storing the product sizes.
+Dependencies
+The project relies on the following Node.js modules:
+
+express: Web framework for Node.js.
+body-parser: Middleware to parse incoming request bodies.
+sqlite3: SQLite database library for Node.js.
+Installation
+To install the project dependencies, run:
+npm install
+Running the Server
+To start the server, run:
+
+npm start
+The server will start and listen on port 3000.
+
+API Endpoints
+Get All Product Sizes
+URL: /getModelArmbest
+Method: GET
+Description: Retrieves all product sizes from the database.
+Response:
+json
+[
+  {
+    "vendor_code": "string",
+    "wb_size": "string",
+    "pair": "string"
+  },
+  ...
+]
+Get WB Size by SKU
+URL: /getWbSize
+Method: GET
+Query Parameters:
+
+skus: SKU of the product.
+Description: Retrieves the WB size for a given SKU.
+Response:
+json
+{
+  "wb_size": "string"
+}
+If the SKU is not found, a 404 status with the message "Размер не найден" is returned.
+
+Add a New Product Size
+URL: /add-element
+Method: POST
+Body Parameters:
+
+vendorcode: Vendor code of the product.
+wbsize: WB size of the product.
+pair: Pair information of the product.
+Description: Adds a new product size to the database.
+Response:
+json
+{
+  "success": true,
+  "message": "Element added successfully"
+}
+In case of an error, a 500 status with the error message is returned.
+
+Update a Product Size
+URL: /update-element
+Method: POST
+Body Parameters:
+
+vendorcode: Vendor code of the product.
+wbsize: WB size of the product.
+pair: New pair information of the product.
+Description: Updates the pair information for a given product size.
+Response:
+json
+{
+  "success": true,
+  "message": "Data updated successfully",
+  "changes": "number"
+}
+In case of an error, a 500 status with the error message is returned.
+
+Delete a Product Size
+URL: /delete-element
+Method: POST
+Body Parameters:
+
+vendorcode: Vendor code of the product.
+wbsize: WB size of the product.
+pair: Pair information of the product.
+Description: Deletes a product size from the database.
+Response:
+json
+{
+  "success": true,
+  "message": "Element deleted successfully"
+}
+If the element is not found, a 404 status with the message "Element not found" is returned. In case of an error, a 500 status with the error message is returned.
+
+Static Files
+The server serves static files from the public directory. To add or modify static files, place them in the public directory.
+
+Database Connection
+The server connects to the SQLite database located at ./database/products.db. The connection is opened when the server starts and closed when the server shuts down.
+
+Error Handling
+The server logs errors to the console and returns appropriate HTTP status codes and error messages in the responses.
+
+Conclusion
+This project provides a simple yet effective way to manage product sizes in a SQLite database through a Node.js server. The provided endpoints cover the basic CRUD operations needed to interact with the product sizes.

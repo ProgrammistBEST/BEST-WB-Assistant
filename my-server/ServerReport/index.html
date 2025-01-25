@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Скачать отчет</title>
+</head>
+<body>
+    <h1>Скачать отчет</h1>
+
+    <form id="reportForm">
+        <label for="brand">Бренд:</label>
+        <input type="text" id="brand" name="brand" required>
+        <br><br>
+
+        <label for="size">Размер:</label>
+        <input type="text" id="size" name="size" required>
+        <br><br>
+
+        <label for="model">Модель:</label>
+        <input type="text" id="model" name="model" required>
+        <br><br>
+
+        <button type="submit">Скачать отчет</button>
+    </form>
+
+    <script>
+        document.getElementById('reportForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const brand = document.getElementById('brand').value;
+            const size = document.getElementById('size').value;
+            const model = document.getElementById('model').value;
+
+            // Формируем URL для запроса
+            const url = `http://localhost:3100/report_hs?brand=${encodeURIComponent(brand)}&Size=${encodeURIComponent(size)}&Model=${encodeURIComponent(model)}`;
+
+            try {
+                console.log(`[INFO] Отправка запроса на сервер: ${url}`);
+
+                // Отправка запроса на сервер
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[ERROR] Ошибка сервера: ${response.status}`, errorText);
+                    alert('Ошибка при скачивании отчета. Проверьте параметры.');
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('[INFO] Данные получены:', data);
+
+                // Создание отчета Excel
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Отчет');
+
+                worksheet.columns = [
+                    { header: 'Размер', key: 'Size', width: 20 },
+                    { header: 'Модель', key: 'Model', width: 20 },
+                    { header: 'Линия', key: 'line', width: 20 },
+                    { header: 'Количество', key: 'Quantity', width: 20 },
+                ];
+
+                // Заполняем данные в Excel
+                data.data.forEach((row, rowIndex) => {
+                    const newRow = worksheet.addRow(row);
+
+                    // Чередуем цвета строк
+                    const fillColor = rowIndex % 2 === 0 ? 'D3D3D3' : 'A9A9A9';
+                    newRow.eachCell((cell) => {
+                        cell.fill = {
+                            type: 'pattern',
+                            pattern: 'solid',
+                            fgColor: { argb: fillColor },
+                        };
+                        cell.border = {
+                            top: { style: 'thin' },
+                            left: { style: 'thin' },
+                            bottom: { style: 'thin' },
+                            right: { style: 'thin' },
+                        };
+                    });
+                });
+
+                // Скачивание файла
+                const excelBuffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([excelBuffer], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Report_${brand}_${model}_${size}.xlsx`;
+                link.click();
+
+                console.log('[INFO] Отчет успешно сформирован и скачан.');
+            } catch (error) {
+                console.error('[ERROR] Ошибка при создании отчета:', error);
+                alert('Произошла ошибка при скачивании отчета.');
+            }
+        });
+    </script>
+
+    <!-- Подключение библиотеки ExcelJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+</body>
+</html>

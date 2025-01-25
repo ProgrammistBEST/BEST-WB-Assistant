@@ -1,0 +1,156 @@
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;   
+}
+.sectionForDatabaseModels{
+    height: 0;
+    background-color: var(--color-middle);
+    border-radius: 10px;
+    opacity: 0;
+    padding-bottom: 20px;
+    transition: 1s;
+}
+.articleModelsFromBD {
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-middle);
+    border-radius: 10px;
+}
+.grid-column-models {
+    display: none;
+    width: 100%;
+    font-size: 0.9rem;
+    gap: 20px;
+    white-space: nowrap;
+    overflow-y: scroll;
+    max-height: 500px;
+    padding-right: 10px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr ;
+
+}
+.model-elemDB {
+    background-color: var(--color-middle);
+    text-align: center;
+    outline: none;
+    border: none;
+    transition: 0.5s;
+}
+.model-elemDB:hover {
+    background-color: var(--color-primary);
+}
+.model-elemDB:focus {
+    background-color: var(--color-active-button);
+}
+.choosedModel_forchanged {
+    width: 100%;
+    height: 100%;
+    margin-top: 10px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.btn-fordatabasemodel {
+    width: 100px;
+    height: 30px;
+    font-weight: 900;
+    border: none;
+    border-radius: 5px;
+}
+.button_saveNewModelDB{
+    background-color: var(--color-middle);
+    transition: background-color 0.5s;
+    width: 200px;
+}
+.button_saveNewModelDB:hover{
+    background-color: var(--color-hover-button);
+    color: var(--color-font-primary);
+    transition: background-color 0.5s;
+}
+.button_deleteModelDB {
+    background-color: var(--color-middle);
+    color: var(--color-font-middle);
+    margin-left: 20px;
+    margin-right: 10px;
+    transition: background-color 0.5s;
+}
+.button_deleteModelDB:hover {
+    background-color: var(--color-active-button);
+    transition: background-color 0.5s;
+    color: var(--color-font-primary);
+}
+.button_changeModelDB{
+    background-color: var(--color-middle);
+    transition: background-color 0.5s;
+}
+.button_changeModelDB:hover {
+    background-color: var(--color-active-button);
+    transition: background-color 0.5s;
+    color: var(--color-font-primary);
+}
+.modelScreenIndatabasemodel{
+    height: 100%;
+    padding-left: 10px;
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    align-items: center;
+}
+.ArticulforModelDB{
+    text-align: center;
+    margin-right: 20px;
+    font-size: 25px;
+    font-weight: 500;
+    border: none;
+    outline: none;
+}
+.box-change-elem-for-modelDB{
+    width: 80px;
+    text-align: center;
+    background-color: var(--color-middle);
+    height: 30px;
+    font-size: 16px;
+    border: none;
+    outline: none;
+    padding: 10px;
+    margin-right: 20px;
+}
+.boxforbuttoninChangingModelsDB{
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.changeModels:hover>.boxforbuttoninChangingModelsDB{
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+.buttonAddModelInDB{
+    width: 200px;
+    height: 25px;
+    background-color: var(--color-primary);
+    color: var(--color-font-middle);
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+.buttonAddModelInDB:hover{
+    color: var(--color-font-primary);
+    background-color: var(--color-active-button);
+    transition: background-color 0.3s;
+}
+.labelforchangeModelsDB{
+    margin: 0;
+    margin-right: 5px;
+    font-weight: 600;
+}

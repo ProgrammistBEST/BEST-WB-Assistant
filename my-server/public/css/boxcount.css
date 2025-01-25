@@ -1,0 +1,42 @@
+:root {
+    --color-primary: #c4e5ff;
+    --color-middle: #fafafa;
+    --color-hover-button: #5AA9E6;
+    --color-active-button: #3b9de9;
+    --color-additional: #F9F9F9;
+    --color-background: white;
+    --color-pseudo-element: rgb(255, 255, 255);
+    --color-font-primary: rgb(248, 242, 242);
+    --color-font-middle: black;   
+}
+#BoxCount {
+    font-size: 25px;
+    color: black;
+    font-weight: 500;
+    text-decoration: none;
+    transition: 0.5s;
+    padding: 5px;
+    border: none;
+    outline: none;
+    background-color: var(--color-middle);
+}
+#BoxCount:hover{
+    background-color: var(--color-middle);
+    transition: 0.5s;
+    border: none;
+}
+
+    
+.BoxCountList {
+    transition: 0.5s;
+    opacity: 0;
+    width: 10%;
+    height: 95%;
+    position: absolute;
+    left: 90%;
+    font-size: 1.6vh;
+    bottom: -100%;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: var(--color-middle);
+}

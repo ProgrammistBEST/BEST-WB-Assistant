@@ -1,0 +1,47 @@
+{
+  "author": "Thomas Schaaf <schaaf@komola.de> (http://www.komola.de/)",
+  "name": "node-zxing",
+  "maintainers": [
+    {
+      "name": "Thomas Schaaf",
+      "email": "schaaf@komola.de"
+    }
+  ],
+  "description": "ZXing Wrapper",
+  "version": "0.1.4",
+  "homepage": "https://github.com/komola/node-zxing",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/komola/node-zxing.git"
+  },
+  "engines": {
+    "node": ">= v0.6.0"
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "main": "lib/main",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/komola/node-zxing/blob/master/LICENSE"
+    }
+  ],
+  "keywords": [
+    "qrcode",
+    "zxing"
+  ],
+  "dependencies": {
+    "@zxing/library": "^0.21.3",
+    "asposewordscloud": "^24.8.0",
+    "fs": "^0.0.1-security",
+    "jimp": "^1.1.2",
+    "node-zxing": "^0.1.4",
+    "path": "^0.12.7",
+    "pdf-lib": "^1.17.1",
+    "pdf-poppler": "^0.2.1",
+    "pdfjs": "^2.5.3",
+    "sharp": "^0.33.5",
+    "sqlite3": "^5.1.7"
+  }
+}
