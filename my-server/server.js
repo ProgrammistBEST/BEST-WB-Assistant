@@ -591,6 +591,8 @@ const addMissingSizes = (modelsRows, reportMap, shortage) => {
     });
 };
 
+const ExcelJS = require('exceljs');
+
 // Эндпоинт для формирования отчета
 app.get('/report_hs', (req, res) => {
     const brand = req.query.brand;

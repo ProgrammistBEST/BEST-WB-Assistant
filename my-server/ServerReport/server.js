@@ -36,23 +36,6 @@ const normalizeSize = (sizeString) => {
     return uniqueSizes.join('-');
 };
 
-// Функция для добавления недостающих моделей с размером в отчет
-const addMissingSizes = (modelsRows, reportMap, shortage) => {
-    modelsRows.forEach(modelRow => {
-        const key = `${modelRow.Model}_${modelRow.Size}`;
-        const quantity = reportMap.get(key); // Проверяем, есть ли модель и размер в отчете
-
-        if (quantity === undefined) {
-            // Если модели и размера нет в отчете, добавляем их в нехватку с количеством 0
-            shortage.push({
-                Model: modelRow.Model,
-                Size: modelRow.Size,
-                Quantity: 0
-            });
-        }
-    });
-};
-
 // Эндпоинт для формирования отчета
 app.get('/report_hs', (req, res) => {
     const brand = req.query.brand;

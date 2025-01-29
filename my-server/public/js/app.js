@@ -23,8 +23,6 @@ let statusProgramLoadApp = JSON.parse(statusProgramApp);
     }
 
     // Вызываем getModels с переданным токеном
-    
-    console.log('Полученный токен:', token);
     await getModels(token);
   } catch (error) {
     console.error('Ошибка при обработке токена:', error.message);
@@ -46,10 +44,7 @@ async function getModels(token) {
   };
 
   while (true) {
-    console.log('get/cards/list ', token)
-
     try {
-      console.log(token)
       const response = await fetch(apiUrlModel, {
         method: "POST",
         headers: {

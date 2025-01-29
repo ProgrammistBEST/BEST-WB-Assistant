@@ -2,7 +2,7 @@ const apiUrl2 = "https://suppliers-api.wildberries.ru/api/v3/supplies";
 (async () => {
     try {
       let token = await getApiById(3, 'Armbest', 'WB');
-      console.log('Полученный токен:', token);
+    //   console.log('Полученный токен:', token);
   
       // Вызываем getCargoes с переданным токеном
       await getCargoes(token);
@@ -18,7 +18,6 @@ let cargoData = {};
 let DataForRemainings = {};
 
 async function getCargoes(token) {
-    console.log('api/v3/supplies: ', token)
     let nextNumber = 0;
     let limit = 100;
     let deliveryList = [];
@@ -107,7 +106,6 @@ async function getOrders(arrayGetOrderId, supplyId) {
 // СТИКЕРЫ
 async function getStikers(cargoes) {
     const apiUrl = "https://suppliers-api.wildberries.ru/api/v3/orders/stickers?";
-    console.log('v3/orders/stickers? ', token)
     const params = {
         "type": 'png',
         "width": 58,

@@ -15,11 +15,6 @@ let statusProgramLoad = JSON.parse(statusProgramSS);
         } else if (statusProgramLoadApp.brand === 'BestShoes') {
             token = await getApiById(6, 'Bestshoes', 'WB');
         }
-  
-        console.log('Полученный токен:', token);
-  
-        // Используем токен для работы с API
-        // Пример запроса: apiUrlModel + token
     } catch (error) {
         console.error('Ошибка при обработке токена:', error.message);
     }

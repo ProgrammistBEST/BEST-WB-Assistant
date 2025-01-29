@@ -1,7 +1,6 @@
 // функция для получения API tokens
 const getApiById = async (id, company_name, category) => {
     try {
-      console.log(`Запрос токена для id=${id}, company_name=${company_name}, category=${category}`);
       const response = await fetch(
         `http://localhost:3000/getApiById?id=${id}&company_name=${company_name}&category=${category}`
       );
