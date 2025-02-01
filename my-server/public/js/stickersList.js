@@ -1,4 +1,4 @@
-const apiUrl2 = "https://suppliers-api.wildberries.ru/api/v3/supplies";
+const apiUrl2 = "https://marketplace-api.wildberries.ru/api/v3/supplies";
 (async () => {
     try {
       let token = await getApiById(3, 'Armbest', 'WB');
@@ -80,7 +80,7 @@ async function getCargoes(token) {
 
 // ЗАКАЗЫ
 async function getOrders(arrayGetOrderId, supplyId) {
-    const apiUrl5 = `https://suppliers-api.wildberries.ru/api/v3/supplies/${supplyId}/orders`;
+    const apiUrl5 = `https://marketplace-api.wildberries.ru/api/v3/supplies/${supplyId}/orders`;
     try {
         const response = await fetch(apiUrl5, {
             method: "GET",
@@ -105,7 +105,7 @@ async function getOrders(arrayGetOrderId, supplyId) {
 
 // СТИКЕРЫ
 async function getStikers(cargoes) {
-    const apiUrl = "https://suppliers-api.wildberries.ru/api/v3/orders/stickers?";
+    const apiUrl = "https://marketplace-api.wildberries.ru/api/v3/orders/stickers?";
     const params = {
         "type": 'png',
         "width": 58,

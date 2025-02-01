@@ -413,7 +413,6 @@ const transferAndDeleteOldRecords = () => {
         });
     });
 };
-
 transferAndDeleteOldRecords();
 
 // Обработчик GET запроса на получение данных о моделях из разных таблиц
@@ -453,17 +452,6 @@ app.get('/getModelBestShoes', (req, res) => {
         }
     });
 });
-
-// // API для получения данных из базы данных
-// app.get('/api/data', (req, res) => {
-//     db.all('SELECT column2 FROM honestsigntable', [], (err, rows) => {
-//         if (err) {
-//             res.status(500).json({ error: err.message });
-//             return;
-//         }
-//         res.json(rows);
-//     });
-// });
 
 // Обслуживание статических файлов! 
 app.use(express.static(path.join(__dirname, 'public')));
