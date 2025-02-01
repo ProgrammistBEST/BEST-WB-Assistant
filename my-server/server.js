@@ -7,8 +7,6 @@ const cors = require('cors');
 const port = 3000;
 const fs = require('fs');
 const os = require('os');
-// const axios = require('axios');
-const { PDFDocument } = require('pdf-lib');
 const multer = require('multer');
 const { processPDF } = require('./pdfProcessor.js');
 const mysql = require('mysql2/promise');
@@ -591,168 +589,113 @@ const addMissingSizes = (modelsRows, reportMap, shortage) => {
     });
 };
 
+// Эндпоинт для формирования отчета
 const ExcelJS = require('exceljs');
 
-// Эндпоинт для формирования отчета
-app.get('/report_hs', (req, res) => {
-    const brand = req.query.brand;
+app.get('/report_hs', async (req, res) => {
+    try {
+        const brand = req.query.brand;
+        if (!brand) return res.status(400).json({ error: 'Параметр brand обязателен' });
 
-    if (!brand) {
-        return res.status(400).json({ error: 'Параметр brand обязателен' });
-    }
+        const reportQuery = `
+            SELECT Model, Size, COUNT(CASE WHEN Status = 'Waiting' THEN 1 ELSE NULL END) AS Quantity
+            FROM lines
+            WHERE brand = ?
+            GROUP BY Model, Size
+        `;
 
-    const reportQuery = `
-        SELECT 
-            Model, 
-            Size, 
-            COUNT(CASE WHEN Status = "Waiting" THEN 1 ELSE NULL END) AS Quantity
-        FROM lines
-        WHERE brand = ?
-        GROUP BY Model, Size
-    `;
+        const modelsQuery = `
+            SELECT vendor_code AS Model, size_key AS Size 
+            FROM product_sizes${brand}
+        `;
 
-    const modelsQuery = `
-        SELECT vendor_code AS Model, size_key AS Size 
-        FROM product_sizes${brand}
-    `;
+        const reportQuerySize = `
+            SELECT Model, Size, COUNT(CASE WHEN Status = 'Used' THEN 1 ELSE NULL END) AS Quantity
+            FROM DeleteKYZ
+            WHERE brand = ?
+            GROUP BY Model, Size
+        `;
 
-    // Выполнение запроса для отчета
-    dbKYZ.all(reportQuery, [brand], (err, reportRows) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+        const reportRows = await queryDatabase(dbKYZ, reportQuery, [brand]);
+        const modelsRows = await queryDatabase(db, modelsQuery, []);
+
+        const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity]));
+
+        const available = [];
+        const shortage = [];
+
+        reportRows.forEach(row => {
+            const quantity = row.Quantity;
+            const targetArray = quantity > 10 ? available : shortage;
+            targetArray.push({ Model: row.Model, Size: row.Size, Quantity: quantity });
+        });
+
+        if (brand === 'Best26') {
+            modelsRows.forEach(modelRow => {
+                const key = `${modelRow.Model}_${modelRow.Size}`;
+                if (!reportMap.has(key)) {
+                    shortage.push({ Model: modelRow.Model, Size: modelRow.Size, Quantity: 0 });
+                }
+            });
+        } else {
+            const deleteKYZRows = await queryDatabase(dbKYZ, reportQuerySize, [brand]);
+            deleteKYZRows.forEach(row => {
+                const key = `${row.Model}_${row.Size}`;
+                if (!reportMap.has(key)) {
+                    shortage.push({ Model: row.Model, Size: row.Size, Quantity: 0 });
+                }
+            });
         }
 
-        // Выполнение запроса для получения всех моделей и размеров
-        db.all(modelsQuery, (err, modelsRows) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-
-            // Создаем карту для быстрого поиска данных из отчета
-            const reportMap = new Map();
-            reportRows.forEach(row => {
-                const key = `${row.Model}_${row.Size}`;
-                reportMap.set(key, row.Quantity);
-            });
-
-            // Инициализируем массивы для наличия и нехватки
-            const available = [];
-            const shortage = [];
-
-            // Обрабатываем все модели из отчета
-            reportRows.forEach(row => {
-                const key = `${row.Model}_${row.Size}`;
-                const quantity = row.Quantity;
-
-                if (quantity > 10) {
-                    // ЧЗ больше 10 — добавляем в "Есть в наличии"
-                    available.push({
-                        Model: row.Model,
-                        Size: row.Size,
-                        Quantity: quantity
-                    });
-                } else {
-                    // ЧЗ меньше или равно 10 — добавляем в "Нехватка"
-                    shortage.push({
-                        Model: row.Model,
-                        Size: row.Size,
-                        Quantity: quantity
-                    });
-                }
-            });
-
-            // Обрабатываем все модели из таблицы product_sizes${brand}
-            modelsRows.forEach(modelRow => {
-                // Нормализуем размер
-                const normalizedSize = normalizeSize(modelRow.Size);
-
-                const key = `${modelRow.Model}_${normalizedSize}`;
-                const quantity = reportMap.get(key); // Проверяем, есть ли модель и размер в отчете
-
-                if (quantity === undefined) {
-                    // Если модели и размера нет в отчете, добавляем их в нехватку с количеством 0
-                    shortage.push({
-                        Model: modelRow.Model,
-                        Size: normalizedSize,
-                        Quantity: 0
-                    });
-                }
-            });
-
-            // Формируем Excel-файл
-            const workbook = new ExcelJS.Workbook();
-
-            // Лист "Есть в наличии"
-            const availableSheet = workbook.addWorksheet('Есть в наличии');
-            availableSheet.columns = [
-                { header: 'Модель', key: 'Model', width: 20 },
-                { header: 'Размер', key: 'Size', width: 20 },
-                { header: 'Количество ЧЗ', key: 'Quantity', width: 20 },
-            ];
-            available.forEach(row => availableSheet.addRow(row));
-
-            // Лист "Нехватка"
-            const shortageSheet = workbook.addWorksheet('Нехватка');
-            shortageSheet.columns = [
-                { header: 'Модель', key: 'Model', width: 20 },
-                { header: 'Размер', key: 'Size', width: 20 },
-                { header: 'Количество ЧЗ', key: 'Quantity', width: 20 },
-            ];
-
-            // Добавляем строки с данными
-            shortage.forEach(row => {
-                const newRow = shortageSheet.addRow(row);
-
-                // Применяем стили в зависимости от значения Quantity
-                const quantity = row.Quantity;
-
-                let fillColor = 'FFFFFF'; // По умолчанию — белый фон
-                let fontBold = false;    // По умолчанию текст не жирный
-
-                if (quantity < 5) {
-                    fillColor = 'EE2028'; // Красный фон
-                    fontBold = true;
-                } else if (quantity >= 5 && quantity <= 8) {
-                    fillColor = 'F7941F'; // Оранжевый фон
-                    fontBold = true;
-                } else if (quantity > 8) {
-                    fillColor = '20B04B'; // Зеленый фон
-                    fontBold = true;
-                }
-
-                // Применяем стиль к строке
-                newRow.eachCell(cell => {
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: fillColor },
-                    };
-                    cell.font = {
-                        bold: fontBold,
-                    };
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' },
-                    };
-                });
-            });
-
-            // Скачивание Excel-файла
-            res.setHeader(
-                'Content-Type',
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            );
-            res.setHeader(
-                'Content-Disposition',
-                `attachment; filename=${brand}_report.xlsx`
-            );
-
-            workbook.xlsx.write(res).then(() => res.end());
-        });
-    });
+        const workbook = createExcelReport(available, shortage);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${brand}_report.xlsx`);
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
+
+function queryDatabase(db, query, params) {
+    return new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+    });
+}
+
+function createExcelReport(available, shortage) {
+    const workbook = new ExcelJS.Workbook();
+    
+    const createSheet = (sheetName, data) => {
+        const sheet = workbook.addWorksheet(sheetName);
+        sheet.columns = [
+            { header: 'Модель', key: 'Model', width: 20 },
+            { header: 'Размер', key: 'Size', width: 20 },
+            { header: 'Количество ЧЗ', key: 'Quantity', width: 20 },
+        ];
+        data.forEach(row => {
+            const newRow = sheet.addRow(row);
+            styleRow(newRow, row.Quantity);
+        });
+    };
+    
+    const styleRow = (row, quantity) => {
+        let fillColor = 'FFFFFF';
+        if (quantity < 5) fillColor = 'EE2028';
+        else if (quantity >= 5 && quantity <= 8) fillColor = 'F7941F';
+        else if (quantity > 8) fillColor = '20B04B';
+        
+        row.eachCell(cell => {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+            cell.font = { bold: quantity <= 10 };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+        });
+    };
+
+    createSheet('Есть в наличии', available);
+    createSheet('Нехватка', shortage);
+    return workbook;
+}
 
 // Запуск сервера
 app.listen(port, () => {

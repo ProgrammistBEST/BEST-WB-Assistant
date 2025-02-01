@@ -10,31 +10,13 @@ const sqlUpdate = `UPDATE lines SET fullline = ? WHERE line = ?`;
 const sharp = require('sharp');
 
 let cropOptions = {};
-let cropBox = {};
- 
-let line;
 let db = new sqlite3.Database('./database/honestsigndb.db', (err) => {
   if (err) {
       console.error('Could not connect to database', err);
   } else {
-      console.log(' Успешное подключение honestsigndb');
+      console.log(' Успешное подключение honestsigndb QRrecorder');
   }
 });
-
-const squareOptions = {
-  x: 0,
-  y: 0,
-  width: 80,
-  height: 150,
-};
-const squareOptions2 = {
-  x: 0,
-  y: 0,
-  width: 160,
-  height: 36,
-};
-
-// startQRdecoder("BestShoes");
 
 function startQRdecoder(brandData){
   console.log(brandData)
@@ -59,7 +41,6 @@ function startQRdecoder(brandData){
       if (row.fullline == null || row.fullline.length < 5 || row.line == "") {
         arrayForKyzwihoutFullKyz.push(row)
       }
-      // console.log(`Обрабатываем элемент: ${JSON.stringify(row.line)} с индексом ${index}`);
     });
     console.log(arrayForKyzwihoutFullKyz.length)
     arrayForKyzwihoutFullKyz.forEach((row, index) => {
