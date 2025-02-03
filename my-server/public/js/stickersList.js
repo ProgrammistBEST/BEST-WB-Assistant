@@ -2,7 +2,6 @@ const apiUrl2 = "https://marketplace-api.wildberries.ru/api/v3/supplies";
 (async () => {
     try {
       let token = await getApiById(3, 'Armbest', 'WB');
-    //   console.log('Полученный токен:', token);
   
       // Вызываем getCargoes с переданным токеном
       await getCargoes(token);
@@ -21,7 +20,6 @@ async function getCargoes(token) {
     let nextNumber = 0;
     let limit = 100;
     let deliveryList = [];
-    let ArrayForRemainings = [];
 
     while (true) {
         let params2 = {
@@ -170,5 +168,3 @@ async function getStikers(cargoes) {
         console.error("Error fetching data:", error);
     }
 }
-
-// getCargoes(token)
