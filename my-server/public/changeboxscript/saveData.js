@@ -212,36 +212,47 @@ function loadData() {
     });
 
 }
-
 function clearData() {
-    openDatabase().then(() => {
-        const transaction = db.transaction(['sections', 'orders'], 'readwrite');
-        const sectionsStore = transaction.objectStore('sections');
-        const ordersStore = transaction.objectStore('orders');
+    // Показываем диалоговое окно для подтверждения
+    if (confirm('Вы уверены, что хотите удалить все данные?')) {
+        openDatabase().then(() => {
+            const transaction = db.transaction(['sections', 'orders'], 'readwrite');
+            const sectionsStore = transaction.objectStore('sections');
+            const ordersStore = transaction.objectStore('orders');
+            
+            // Очищаем хранилища
+            sectionsStore.clear();
+            ordersStore.clear();
 
-        sectionsStore.clear();
-        ordersStore.clear();
+            transaction.oncomplete = () => {
+                console.log('Данные успешно очищены.');
+                
+                // Очистка содержимого элементов после очистки IndexedDB
+                document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox').forEach(box => {
+                    box.remove();
+                });
+                document.querySelectorAll('.sectionForAcceptDeliveryold .mainbox').forEach(box => {
+                    box.remove();
+                });
+            };
 
-        transaction.oncomplete = () => {
-            console.log('Данные успешно очищены.');
-            // Очистка содержимого элементов после очистки IndexedDB
-            document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox').forEach(box => {
-                box.remove();
-            });
-            document.querySelectorAll('.sectionForAcceptDeliveryold .mainbox').forEach(box => {
-                box.remove();
-            });
-        };
-
-        transaction.onerror = (event) => {
-            console.error('Ошибка при очистке IndexedDB', event);
-        };
-    }).catch((error) => {
-        console.error(error);
-    });
+            transaction.onerror = (event) => {
+                console.error('Ошибка при очистке IndexedDB', event);
+            };
+        }).catch((error) => {
+            console.error(error);
+        });
+    } else {
+        // Если пользователь нажал "Отмена"
+        console.log('Операция отменена пользователем.');
+    }
 }
 
 // Восстановление данных при загрузке страницы
 document.addEventListener('DOMContentLoaded', loadData);
+
+// Сохранение данных при клике на кнопку
 document.getElementById('DownloadInLocalStorageChanges').addEventListener('click', saveData);
+
+// Удаление данных при клике на кнопку
 document.querySelector('.ClearLocalStorage').addEventListener('click', clearData);
