@@ -10,7 +10,8 @@
     "pdf-lib": "^1.17.1",
     "pdf-poppler": "^0.2.1",
     "sharp": "^0.33.5",
-    "sqlite": "^5.1.1",    
+    "socket.io": "^4.8.1",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {

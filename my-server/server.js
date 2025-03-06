@@ -5,6 +5,7 @@ const path = require('path');
 const app = express();
 const cors = require('cors');
 const port = 3000;
+const portSocket = 3002;
 const fs = require('fs');
 const os = require('os');
 const multer = require('multer');
@@ -18,6 +19,22 @@ const dbApi = mysql.createPool({
     database: 'bestserver',
     waitForConnections: true,
     connectionLimit: 10,
+});
+
+// Для работы с сокетами
+const http = require('http');
+const socketIo = require('socket.io');
+const server = http.createServer();
+
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected');
 });
 
 app.use(cors()); // Разрешает все источники
@@ -67,13 +84,13 @@ let dbKYZ = new sqlite3.Database('./database/honestsigndb.db', (err) => {
     }
 });
 
-const saveDataAboutDelivery = new sqlite3.Database('./database/SaveDataAboutDelivery.db', sqlite3.OPEN_READWRITE, (err) => {
-    if (err) {
-        console.error('Ошибка при открытии базы данных', err.message);
-    } else {
-        console.log(' Успешное подключение к SaveDataAboutDelivery');
-    }
-});
+// const saveDataAboutDelivery = new sqlite3.Database('./database/SaveDataAboutDelivery.db', sqlite3.OPEN_READWRITE, (err) => {
+//     if (err) {
+//         console.error('Ошибка при открытии базы данных', err.message);
+//     } else {
+//         console.log(' Успешное подключение к SaveDataAboutDelivery');
+//     }
+// });
 
 // Middleware для обработки JSON
 app.use(bodyParser.json());
@@ -355,7 +372,7 @@ app.post('/uploadNewKyz', upload.single('pdf'), async (req, res) => {
         const brandData = JSON.parse(req.body.brandData);
 
         // Обработка PDF
-        await processPDF(fileBuffer, fileName, brandData);
+        await processPDF(fileBuffer, fileName, brandData, io);
         
         res.status(200).send({ message: 'File processed successfully.' });
     } catch (err) {
@@ -542,13 +559,13 @@ app.get('/getWbSizeBestShoes', (req, res) => {
     });
 });
 
-// Функция для вывода информации о памяти
-function printMemoryUsage() {
-    const freeMemory = os.freemem();
-    console.log(`Свободная память: ${(freeMemory / 1024 / 1024).toFixed(2)} MB`);
-}
+// // Функция для вывода информации о памяти
+// function printMemoryUsage() {
+//     const freeMemory = os.freemem();
+//     console.log(`Свободная память: ${(freeMemory / 1024 / 1024).toFixed(2)} MB`);
+// }
 
-setInterval(printMemoryUsage, 5000); // Вывод информации каждые 5 секунд
+// setInterval(printMemoryUsage, 5000); // Вывод информации каждые 5 секунд
 
 // Функция для нормализации размеров (удаление повторяющихся значений)
 const normalizeSize = (sizeString) => {
@@ -689,7 +706,10 @@ function createExcelReport(available, shortage) {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
-
+// Запуск сервера сокетов
+server.listen(portSocket, () => {
+    console.log(`WebSocket is running on port https://localhost:${portSocket}`);
+  });
 // Закрытие подключения к базе данных при завершении работы сервера
 process.on('SIGINT', () => {
     db.close((err) => {

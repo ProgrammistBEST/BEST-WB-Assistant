@@ -149,31 +149,64 @@ function untileHonestSignNo(){
     }, 500);
 }
 
-document.getElementById('UniqButtonAddNewKYZ').addEventListener('click', async function () {
+const socket = io(`http://${window.location.hostname}:3002`);
 
+// Элементы DOM
+const modalOverlay = document.getElementById('modal-overlay');
+const progressFill = document.getElementById('progress-fill');
+const modalMessage = document.getElementById('modal-message');
+const closeModalBtn = document.getElementById('close-modal-btn');
+
+// Функция для отображения модального окна
+function ShowModalDownlads(status) {
+    modalMessage.textContent = status.message || 'Загрузка...';
+    progressFill.style.width = `${status.progress}%`;
+    modalOverlay.classList.add('active');
+}
+
+// Функция для скрытия модального окна
+function hideModal() {
+    modalOverlay.classList.remove('active');
+}
+
+// Обработчик закрытия модального окна
+closeModalBtn.addEventListener('click', hideModal);
+
+// Обработка события от сервера
+socket.on('upload_status', ({ progress, message }) => {
+    console.log('Upload Status:', message);
+    const status = { progress, message };
+    ShowModalDownlads(status);
+});
+
+// Обработчик клика на кнопку "Сохранить"
+document.getElementById('UniqButtonAddNewKYZ').addEventListener('click', async function () {
     const fileInput = document.getElementById('file-input');
     const file = fileInput.files[0];
 
     if (!file) {
-        document.querySelector('body').textContent = 'Пожалуйста, выберите файл.';
+        alert('Пожалуйста, выберите файл.');
         return;
     }
-    if (statusProgram.brand != 'Armbest' && statusProgram.brand != 'Best26' && statusProgram.brand != 'BestShoes') {
+
+    if (statusProgram.brand !== 'Armbest' && statusProgram.brand !== 'Best26' && statusProgram.brand !== 'BestShoes') {
+        alert('Недопустимый бренд.');
         return;
     }
 
     let userConfirmed = confirm(`Вы уверены, что хотите добавить новые KYZ для "${statusProgram.brand}"`);
-    if (userConfirmed) {
-        
-    } else {
-        return
+    if (!userConfirmed) {
+        return;
     }
 
+    // Показываем модальное окно перед отправкой файла
+    ShowModalDownlads({ progress: 0, message: 'Начинается загрузка...' });
 
     if (file) {
         const formData = new FormData();
         formData.append('pdf', file);
         formData.append('brandData', JSON.stringify(statusProgram.brand)); // Добавляем данные из progStatus.brand
+
         try {
             const response = await fetch('/uploadNewKyz', {
                 method: 'POST',
@@ -183,28 +216,40 @@ document.getElementById('UniqButtonAddNewKYZ').addEventListener('click', async f
             if (response.ok) {
                 const result = await response.json();
 
+                // Обновляем прогресс загрузки через сокет
+                socket.emit('upload_start'); // Уведомляем сервер о начале загрузки
+
+                // После успешной загрузки скрываем модальное окно
+                setTimeout(() => {
+                    showModal({ progress: 100, message: 'Загрузка завершена!' });
+                    setTimeout(hideModal, 2000); // Скрываем модальное окно через 2 секунды
+                }, 1000);
+
+                // Отображаем сообщение об успехе
                 document.querySelector('body').style.overflow = 'hidden';
-                document.getElementById('success-message').style.display= 'flex'
+                document.getElementById('success-message').style.display = 'flex';
                 let messageText = document.querySelector('.text-message');
                 messageText.textContent = 'Данные успешно добавлены!';
                 setTimeout(() => {
-                    document.getElementById('success-message').style.opacity= 1
+                    document.getElementById('success-message').style.opacity = 1;
                     setTimeout(() => {
-                        document.querySelector('.message').style.transform = "translate(220px)"
-                        document.getElementById('success-message').style.opacity= 0
+                        document.querySelector('.message').style.transform = "translate(220px)";
+                        document.getElementById('success-message').style.opacity = 0;
                         setTimeout(() => {
-                            document.getElementById('success-message').style.display = 'none'
-                            document.querySelector('.message').style.transform = "translate(0px)"
+                            document.getElementById('success-message').style.display = 'none';
+                            document.querySelector('.message').style.transform = "translate(0px)";
                             document.querySelector('body').style.overflow = '';
                         }, 1000);
-                    }, 4000);    
+                    }, 4000);
                 }, 200);
             } else {
-                alert('Error uploading file.');
+                alert('Ошибка при загрузке файла.');
+                hideModal(); // Скрываем модальное окно при ошибке
             }
         } catch (err) {
             console.error('Error:', err);
-            alert('Error uploading file.');
+            alert('Ошибка при загрузке файла.');
+            hideModal(); // Скрываем модальное окно при ошибке
         }
     }
 });

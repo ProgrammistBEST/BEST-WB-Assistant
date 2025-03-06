@@ -74,7 +74,7 @@ async function createSinglePagePDF(pdfBytes, pageIndex) {
 }
 
 // Функция обработки PDF
-async function processPDF(fileBuffer, fileName, brandData) {
+async function processPDF(fileBuffer, fileName, brandData, io) {
   try {
     const data = new Uint8Array(fileBuffer);
     const { extractedTexts, pdf } = await extractTextFromPDF(data);
@@ -88,6 +88,10 @@ async function processPDF(fileBuffer, fileName, brandData) {
     let startPage = 0;
 
     while (startPage < extractedTexts.length) {
+      
+      const progress = Math.round(((startPage + pageSize) / extractedTexts.length) * 100);
+      io.emit('upload_status', { progress, message: `Загружено ${startPage} из ${extractedTexts.length}` });
+
       const pageDataList = await Promise.all(extractedTexts.slice(startPage, startPage + pageSize).map(async (text, pageIndex) => {
         const linesArray = text.split('\n');
         let lines = linesArray.filter(line => line.startsWith('(01)')).join('\n');
@@ -128,8 +132,11 @@ async function processPDF(fileBuffer, fileName, brandData) {
     await db.close();
     console.log(`PDF файл "${fileName}" успешно обработан и данные сохранены в базу данных.`);
     startQRdecoder(brandData);
+    io.emit('upload_status', { progress: 100, message: 'Загрузка завершена!' });
+
   } catch (err) {
     console.error('Ошибка при обработке PDF и сохранении данных в базу данных:', err);
+    io.emit('upload_status', { progress: 0, message: `Ошибка: ${err.message}` });
   }
 }
 
