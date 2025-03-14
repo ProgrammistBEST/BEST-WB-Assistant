@@ -3,7 +3,7 @@ let allItems = [];
 let limitModel = 100;
 
 // URL для доступа к API Wildberries
-const apiUrlModel = "https://suppliers-api.wildberries.ru/content/v2/get/cards/list";
+const apiUrlModel = "https://content-api.wildberries.ru/content/v2/get/cards/list";
 const totalOrders = 10;
 let processedModels = 0;
 let statusProgramApp = localStorage.getItem('statusProgram');
