@@ -9,12 +9,21 @@ const ReportingExcel = () => {
     button.addEventListener('click', async (event) => {
         event.preventDefault();
 
-        const brand = button.value; // Получаем бренд из кнопки
+        // Получение значения brand из localStorage
+        const brand = localStorage.getItem('brand') || '';
+
         if (!brand) {
-            alert('Пожалуйста, выберите бренд.');
+            console.error('[ERROR] Значение "brand" не найдено в localStorage.');
+        } else {
+            console.log('[INFO] Brand:', brand);
+        }
+
+        if (!brand) {
+            alert('Пожалуйста, выберите бренд или убедитесь, что данные сохранены в localStorage.');
             return;
         }
 
+        // Формируем URL запроса
         const url = `http://${window.location.hostname}:3000/report_hs?brand=${encodeURIComponent(brand)}`;
         try {
             console.log(`[INFO] Отправка запроса на сервер: ${url}`);

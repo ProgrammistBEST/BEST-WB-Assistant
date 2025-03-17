@@ -550,7 +550,6 @@ app.get('/getWbSizeArmbest', async (req, res) => {
         if (rows.length > 0) {
             const size = rows[0].size
             const techSize = String(size); // Преобразуем размер в строку
-            console.log(techSize)
             res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         } else {
             res.status(404).send('Размер не найден');
@@ -579,7 +578,6 @@ app.get('/getWbSizeBest26', async (req, res) => {
         // Если размер найден, формируем ответ
         if (rows.length > 0 && rows[0].size !== null) {
             const techSize = String(rows[0].size); // Преобразуем размер в строку
-            console.log(`Tech size for Best26 SKU ${skus}:`, techSize); // Логируем результат
             return res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         }
 
@@ -610,7 +608,6 @@ app.get('/getWbSizeBestShoes', async (req, res) => {
         // Если размер найден, формируем ответ
         if (rows.length > 0 && rows[0].size !== null) {
             const techSize = String(rows[0].size); // Преобразуем размер в строку
-            console.log(`Tech size for BestShoes SKU ${skus}:`, techSize); // Логируем результат
             return res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         }
 
@@ -633,80 +630,99 @@ app.get('/getWbSizeBestShoes', async (req, res) => {
 // Эндпоинт для формирования отчета
 const ExcelJS = require('exceljs');
 
+// Функция для выполнения запроса к MySQL
+function queryMySQL(pool, query, params) {
+    return new Promise((resolve, reject) => {
+        pool.query(query, params, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+        });
+    });
+}
+
+// Функция для выполнения запроса к SQLite
+function querySQLite(db, query, params) {
+    return new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => {
+            if (err) return reject(err);
+            resolve(rows);
+        });
+    });
+}
+
 app.get('/report_hs', async (req, res) => {
     try {
         const brand = req.query.brand;
-        if (!brand) return res.status(400).json({ error: 'Параметр brand обязателен' });
+        if (!brand) {
+            return res.status(400).json({ error: 'Параметр brand обязателен' });
+        }
 
+        // Запрос для получения данных из таблицы lines (SQLite)
         const reportQuery = `
             SELECT Model, Size, COUNT(CASE WHEN Status = 'Waiting' THEN 1 ELSE NULL END) AS Quantity
-            FROM lines
+            FROM \`lines\`
             WHERE brand = ?
             GROUP BY Model, Size
         `;
 
-        const modelsQuery = `
-            SELECT vendor_code AS Model, wb_size AS Size 
-            FROM product_sizes${brand}
-        `;
+        // Получаем данные из таблицы lines (SQLite)
+        const reportRows = await querySQLite(dbKYZ, reportQuery, [brand]);
 
-        const reportQuerySize = `
-            SELECT Model, Size, COUNT(CASE WHEN Status = 'Used' THEN 1 ELSE NULL END) AS Quantity
-            FROM DeleteKYZ
-            WHERE brand = ?
-            GROUP BY Model, Size
-        `;
-
-        const reportRows = await queryDatabase(dbKYZ, reportQuery, [brand]);
-        const modelsRows = await queryDatabase(db, modelsQuery, []);
-
+        // Создаем карту для быстрого доступа к данным из таблицы lines
         const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity]));
 
+        // Получаем данные о продуктах из таблицы products (MySQL)
+        const modelsQuery = `
+            SELECT article AS Model, size AS Size
+            FROM products
+            WHERE company_name = ?
+        `;
+        const modelsRows = await queryMySQL(pool, modelsQuery, [brand]);
+
+        // Логика для разных брендов
         const available = [];
         const shortage = [];
 
-        reportRows.forEach(row => {
-            const quantity = row.Quantity;
-            const targetArray = quantity > 10 ? available : shortage;
-            targetArray.push({ Model: row.Model, Size: row.Size, Quantity: quantity });
-        });
-
-        if (brand === 'Best26') {
+        if (brand === 'Armbest' || brand === 'Bestshoes') {
+            // Для Armbest и Bestshoes берем только уникальные размеры
+            const uniqueSizes = [...new Set(modelsRows.map(row => row.Size))];
+            uniqueSizes.forEach(size => {
+                const key = `multimodel_${size}`;
+                const quantity = reportMap.get(key) || 0;
+                const targetArray = quantity > 10 ? available : shortage;
+                targetArray.push({ Model: 'multimodel', Size: size, Quantity: quantity });
+            });
+        } else if (brand === 'Best26') {
+            // Для Best26 проверяем каждую модель и размер
             modelsRows.forEach(modelRow => {
                 const key = `${modelRow.Model}_${modelRow.Size}`;
-                if (!reportMap.has(key)) {
+                const quantity = reportMap.get(key) || 0;
+                if (quantity > 0) {
+                    available.push({ Model: modelRow.Model, Size: modelRow.Size, Quantity: quantity });
+                } else {
                     shortage.push({ Model: modelRow.Model, Size: modelRow.Size, Quantity: 0 });
-                }
-            });
-        } else {
-            const deleteKYZRows = await queryDatabase(dbKYZ, reportQuerySize, [brand]);
-            deleteKYZRows.forEach(row => {
-                const key = `${row.Model}_${row.Size}`;
-                if (!reportMap.has(key)) {
-                    shortage.push({ Model: row.Model, Size: row.Size, Quantity: 0 });
                 }
             });
         }
 
+        // Создаем Excel-отчет
         const workbook = createExcelReport(available, shortage);
+
+        // Отправляем файл пользователю
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename=${brand}_report.xlsx`);
         await workbook.xlsx.write(res);
         res.end();
     } catch (error) {
+        console.error('[ERROR] Ошибка сервера:', error.message);
         res.status(500).json({ error: error.message });
     }
 });
 
-function queryDatabase(db, query, params) {
-    return new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => (err ? reject(err) : resolve(rows)));
-    });
-}
-
+// Функция для создания Excel-отчета
 function createExcelReport(available, shortage) {
     const workbook = new ExcelJS.Workbook();
-    
+
     const createSheet = (sheetName, data) => {
         const sheet = workbook.addWorksheet(sheetName);
         sheet.columns = [
@@ -719,13 +735,13 @@ function createExcelReport(available, shortage) {
             styleRow(newRow, row.Quantity);
         });
     };
-    
+
     const styleRow = (row, quantity) => {
         let fillColor = 'FFFFFF';
-        if (quantity < 5) fillColor = 'EE2028';
-        else if (quantity >= 5 && quantity <= 8) fillColor = 'F7941F';
-        else if (quantity > 8) fillColor = '20B04B';
-        
+        if (quantity < 5) fillColor = 'EE2028'; // Красный
+        else if (quantity >= 5 && quantity <= 8) fillColor = 'F7941F'; // Оранжевый
+        else if (quantity > 8) fillColor = '20B04B'; // Зеленый
+
         row.eachCell(cell => {
             cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
             cell.font = { bold: quantity <= 10 };
@@ -735,6 +751,7 @@ function createExcelReport(available, shortage) {
 
     createSheet('Есть в наличии', available);
     createSheet('Нехватка', shortage);
+
     return workbook;
 }
 
