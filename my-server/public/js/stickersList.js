@@ -1,80 +1,81 @@
 const apiUrl2 = "https://marketplace-api.wildberries.ru/api/v3/supplies";
-(async () => {
-    try {
-      let token = await getApiById(3, 'Armbest', 'WB');
-  
-      // Вызываем getCargoes с переданным токеном
-      await getCargoes(token);
-    } catch (error) {
-      console.error('Ошибка при обработке токена:', error.message);
-    }
-  })();
-let objOrdersss2 = [];
+
+let objOrdersss2  = [];
 let idordersArray = [];
 
 // ПОСТАВКИ - ОСНОВА
 let cargoData = {};
 let DataForRemainings = {};
 
-async function getCargoes(token) {
+// ПОСТАВКИ
+async function getCargoes() {
+
     let nextNumber = 0;
     let limit = 100;
     let deliveryList = [];
+    let ArrayForRemainings = [];
 
-    while (true) {
-        let params2 = {
-            limit: limit,
-            next: nextNumber,
-        };
+  while (true) {
+    let params2 = {
+        'limit' : limit,
+        'next' : nextNumber,
+        }
         const urlWithParams2 = new URL(apiUrl2);
-        Object.keys(params2).forEach((key) => urlWithParams2.searchParams.append(key, params2[key]));
+        Object.keys(params2).forEach(key => urlWithParams2.searchParams.append(key, params2[key]));
 
         try {
             const response = await fetch(urlWithParams2, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
+            method: "GET",
+            headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            },
+        });
 
-            if (!response.ok) {
-                console.log("Ошибка HTTP: " + response.status);
-                break;
-            }
-
-            let items = await response.json();
-            console.log(items);
-            nextNumber = items.next;
-            if (nextNumber === 0) {
-                break;
-            }
-            Object.values(items.supplies).forEach((value) => {
-                if (value.done === false && value.name === statusProgram.NameDelivery) {
+        if (!response.ok) {
+            console.log("Ошибка HTTP: " + response.status);
+        }
+        
+        let items = await response.json();
+        console.log(items)
+        nextNumber = items.next
+        if (nextNumber == 0){
+            break
+        }
+        Object.values(items.supplies).forEach(value => {
+            if (value.done == false) {
+                if (value.name == statusProgram.NameDelivery) {
                     deliveryList.push(value);
                     cargoData[value.id] = {
                         id: value.id,
                         name: value.name,
                         done: value.done,
-                        orders: value.orders,
+                        orders: value.orders
                     };
                 }
-            });
-        } catch (error) {
-            console.error("Ошибка при получении данных:", error);
-            break; // Завершаем цикл при ошибке
-        }
-    }
-
-    await Promise.all(
-        deliveryList.map(async (order) => {
-            await getOrders(idordersArray, order.id);
+                // else {
+                //     ArrayForRemainings.push(value);
+                //     DataForRemainings[value.id] = {
+                //         id: value.id,
+                //         name: value.name,
+                //         done: value.done,
+                //         orders: value.orders
+                //     };
+                // }
+            }
         })
-    );
+        } catch (error) {
+        console.error("Ошибка при получении данных:", error);
+        }
+  }
 
-    await getStikers(idordersArray);
+    await Promise.all(deliveryList.map(async (order) => {
+        await getOrders(idordersArray, order.id);
+    }))
+
+    await getStikers(idordersArray)
+    // console.log("Итоговый результат", cargoData)
 }
-
 
 // ЗАКАЗЫ
 async function getOrders(arrayGetOrderId, supplyId) {
@@ -90,7 +91,7 @@ async function getOrders(arrayGetOrderId, supplyId) {
         if (!response.ok) {
             console.log("Ошибка HTTP: " + response.statusText);
         }
-        const items = await response.json();
+        const items = await response.json(); 
         cargoData[supplyId]['orders'] = items.orders
         items.orders.forEach(ord => {
             idordersArray.push(ord.id)
@@ -104,6 +105,7 @@ async function getOrders(arrayGetOrderId, supplyId) {
 // СТИКЕРЫ
 async function getStikers(cargoes) {
     const apiUrl = "https://marketplace-api.wildberries.ru/api/v3/orders/stickers?";
+
     const params = {
         "type": 'png',
         "width": 58,
@@ -118,9 +120,9 @@ async function getStikers(cargoes) {
             const batchEnd = (page + 1) * batchSize;
             const currentBatch = cargoes.slice(batchStart, batchEnd);
             console.log(currentBatch)
-            if (currentBatch.length == 0) {
-                break;
-            };
+	    if (currentBatch.length == 0) {
+		break;
+	    };
             const body = {
                 'orders': currentBatch,
             };
@@ -156,7 +158,7 @@ async function getStikers(cargoes) {
                 console.error('items.stickers не является массивом:', items.stickers);
                 break
             }
-
+            
             const stickersCount = Object.values(items.stickers).length;
             if (stickersCount < batchSize) {
                 break;
@@ -168,3 +170,5 @@ async function getStikers(cargoes) {
         console.error("Error fetching data:", error);
     }
 }
+
+getCargoes()

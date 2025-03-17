@@ -520,43 +520,106 @@ app.post('/add-element', (req, res) => {
         res.json({ success: true, message: 'Element added successfully' });
     });
 });
+// Настройки подключения к базе данных
+const dbConfig = {
+    host: '192.168.100.170',
+    user: 'root',
+    password: 'root',
+    database: 'test',
+};
 
+// Создаем пул соединений с базой данных
+const pool = mysql.createPool(dbConfig);
 // Получить размер
-app.get('/getWbSizeArmbest', (req, res) => {
+app.get('/getWbSizeArmbest', async (req, res) => {
     const skus = req.query.skus;
-    db.get(`SELECT tech_size FROM product_sizesArmbest WHERE skus = ?`, [skus], (err, row) => {
-        if (err) {
-            res.status(500).send(err);
-        } else if (row) {
-            res.json({ tech_size: row.tech_size });
+
+    // Проверяем, что SKU передан в запросе
+    if (!skus) {
+        return res.status(400).send('SKU не указан');
+    }
+
+    try {
+        // Выполняем запрос к базе данных
+        const [rows] = await pool.execute(
+            'SELECT size FROM products WHERE company_name = ? AND sku = ?',
+            ['Armbest', skus]
+        );
+
+        // Если размер найден, формируем ответ в нужном формате
+        if (rows.length > 0) {
+            const size = rows[0].size
+            const techSize = String(size); // Преобразуем размер в строку
+            console.log(techSize)
+            res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         } else {
             res.status(404).send('Размер не найден');
         }
-    });
+    } catch (error) {
+        console.error('Ошибка при выполнении запроса:', error);
+        res.status(500).send('Ошибка сервера');
+    }
 });
-app.get('/getWbSizeBest26', (req, res) => {
+// Получить размер для Best26
+app.get('/getWbSizeBest26', async (req, res) => {
     const skus = req.query.skus;
-    db.get(`SELECT tech_size FROM product_sizesBest26 WHERE skus = ?`, [skus], (err, row) => {
-        if (err) {
-            res.status(500).send(err);
-        } else if (row) {
-            res.json({ tech_size: row.tech_size });
-        } else {
-            res.status(404).send('Размер не найден');
+
+    // Проверяем, что SKU передан в запросе
+    if (!skus) {
+        return res.status(400).send('SKU не указан');
+    }
+
+    try {
+        // Выполняем запрос к базе данных
+        const [rows] = await pool.execute(
+            'SELECT size FROM products WHERE company_name = ? AND sku = ?',
+            ['Best26', skus]
+        );
+
+        // Если размер найден, формируем ответ
+        if (rows.length > 0 && rows[0].size !== null) {
+            const techSize = String(rows[0].size); // Преобразуем размер в строку
+            console.log(`Tech size for Best26 SKU ${skus}:`, techSize); // Логируем результат
+            return res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         }
-    });
+
+        // Если размер не найден
+        res.status(404).send('Размер не найден');
+    } catch (error) {
+        console.error(`Ошибка при выполнении запроса для Best26 SKU ${skus}:`, error.message);
+        res.status(500).send('Ошибка сервера');
+    }
 });
-app.get('/getWbSizeBestShoes', (req, res) => {
+
+// Получить размер для BestShoes
+app.get('/getWbSizeBestShoes', async (req, res) => {
     const skus = req.query.skus;
-    db.get(`SELECT tech_size FROM product_sizesBestShoes WHERE skus = ?`, [skus], (err, row) => {
-        if (err) {
-            res.status(500).send(err);
-        } else if (row) {
-            res.json({ tech_size: row.tech_size });
-        } else {
-            res.status(404).send('Размер не найден');
+
+    // Проверяем, что SKU передан в запросе
+    if (!skus) {
+        return res.status(400).send('SKU не указан');
+    }
+
+    try {
+        // Выполняем запрос к базе данных
+        const [rows] = await pool.execute(
+            'SELECT size FROM products WHERE company_name = ? AND sku = ?',
+            ['Bestshoes', skus]
+        );
+
+        // Если размер найден, формируем ответ
+        if (rows.length > 0 && rows[0].size !== null) {
+            const techSize = String(rows[0].size); // Преобразуем размер в строку
+            console.log(`Tech size for BestShoes SKU ${skus}:`, techSize); // Логируем результат
+            return res.json({ tech_size: techSize }); // Отправляем данные в формате { tech_size: 'значение' }
         }
-    });
+
+        // Если размер не найден
+        res.status(404).send('Размер не найден');
+    } catch (error) {
+        console.error(`Ошибка при выполнении запроса для BestShoes SKU ${skus}:`, error.message);
+        res.status(500).send('Ошибка сервера');
+    }
 });
 
 // // Функция для вывода информации о памяти
@@ -566,33 +629,6 @@ app.get('/getWbSizeBestShoes', (req, res) => {
 // }
 
 // setInterval(printMemoryUsage, 5000); // Вывод информации каждые 5 секунд
-
-// Функция для нормализации размеров (удаление повторяющихся значений)
-const normalizeSize = (sizeString) => {
-    // Разделяем строку на массив размеров
-    const sizes = sizeString.split('-').map(size => size.trim());
-    // Убираем дублирующиеся размеры
-    const uniqueSizes = [...new Set(sizes)];
-    // Возвращаем нормализованный размер в виде строки
-    return uniqueSizes.join('-');
-};
-
-// Функция для добавления недостающих моделей с размером в отчет
-const addMissingSizes = (modelsRows, reportMap, shortage) => {
-    modelsRows.forEach(modelRow => {
-        const key = `${modelRow.Model}_${modelRow.Size}`;
-        const quantity = reportMap.get(key); // Проверяем, есть ли модель и размер в отчете
-
-        if (quantity === undefined) {
-            // Если модели и размера нет в отчете, добавляем их в нехватку с количеством 0
-            shortage.push({
-                Model: modelRow.Model,
-                Size: modelRow.Size,
-                Quantity: 0
-            });
-        }
-    });
-};
 
 // Эндпоинт для формирования отчета
 const ExcelJS = require('exceljs');
@@ -610,7 +646,7 @@ app.get('/report_hs', async (req, res) => {
         `;
 
         const modelsQuery = `
-            SELECT vendor_code AS Model, size_key AS Size 
+            SELECT vendor_code AS Model, wb_size AS Size 
             FROM product_sizes${brand}
         `;
 

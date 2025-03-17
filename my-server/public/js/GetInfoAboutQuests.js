@@ -19,7 +19,7 @@ const navbarBrandElement = document.querySelector('.navbar-brand');
             token = await getApiById(6, 'Bestshoes', 'WB');
         }
   
-        console.log('Полученный токен:', token);
+        console.log('Полученный токен:');
   
         // Используем токен для работы с API
         // Пример запроса: apiUrlModel + token
