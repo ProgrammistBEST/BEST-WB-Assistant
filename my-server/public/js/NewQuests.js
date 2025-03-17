@@ -597,7 +597,7 @@ async function getQuests() {
         else if (ArticlesWith40inBox.includes(removeColorFromArticle(artCheck))) {
           ord['maxItems'] = 40;
         }
-	console.log('Артикул: ' + artCheck + " Количество пар в кор.: " + ord['maxItems']);
+	// console.log('Артикул: ' + artCheck + " Количество пар в кор.: " + ord['maxItems']);
       })
   })
 

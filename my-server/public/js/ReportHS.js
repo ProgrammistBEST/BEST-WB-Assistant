@@ -10,7 +10,7 @@ const ReportingExcel = () => {
         event.preventDefault();
 
         // Получение значения brand из localStorage
-        const brand = localStorage.getItem('brand') || '';
+        let brand = localStorage.getItem('brand') || '';
 
         if (!brand) {
             console.error('[ERROR] Значение "brand" не найдено в localStorage.');
