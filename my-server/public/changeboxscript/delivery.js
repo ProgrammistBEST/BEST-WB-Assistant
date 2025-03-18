@@ -7,19 +7,19 @@ let statusProgramLoad = JSON.parse(statusProgramSS);
         let token;
         const statusProgramApp = localStorage.getItem('statusProgram');
         const statusProgramLoadApp = JSON.parse(statusProgramApp);
-  
+
         if (statusProgramLoadApp.brand === 'Armbest') {
             token = await getApiById(3, 'Armbest', 'WB');
         } else if (statusProgramLoadApp.brand === 'Best26') {
             token = await getApiById(9, 'Best26', 'WB');
-        } else if (statusProgramLoadApp.brand === 'BestShoes') {
+        } else if (statusProgramLoadApp.brand === 'Bestshoes') {
             token = await getApiById(6, 'Bestshoes', 'WB');
         }
     } catch (error) {
         console.error('Ошибка при обработке токена:', error.message);
     }
-  })();
-  
+})();
+
 
 function AddNewBoxButton() {
     let boxforContainer = document.querySelector('.sectionForAcceptDeliverynew')
@@ -28,23 +28,23 @@ function AddNewBoxButton() {
     container.className = 'box mainbox Boxtransferredfordelivery';
     container.id = 'fakeBoxAdding';
     container.className += ' thirdStock';
-    const StockArea= document.createElement('p');
+    const StockArea = document.createElement('p');
     StockArea.className = 'StockArea';
     StockArea.textContent = "Третий";
 
     container.classList.add(statusProgram.NameDelivery);
     container.classList.add(statusProgram.brand);
-  
-    if (statusProgram.brand == 'Armbest'){
-      container.style.backgroundColor = '#8dddbb'
+
+    if (statusProgram.brand == 'Armbest') {
+        container.style.backgroundColor = '#8dddbb'
     }
-    else if (statusProgram.brand == 'Best26'){
-      container.style.backgroundColor = 'rgb(169 169 220)'
+    else if (statusProgram.brand == 'Best26') {
+        container.style.backgroundColor = 'rgb(169 169 220)'
     }
-    else if (statusProgram.brand == 'BestShoes'){
-      container.style.backgroundColor = '#C4E5FF'
+    else if (statusProgram.brand == 'Bestshoes') {
+        container.style.backgroundColor = '#C4E5FF'
     }
-  
+
     // container.id = article;
     boxforContainer.appendChild(container)
 
@@ -63,19 +63,19 @@ function AddNewBoxButton() {
     else if (prodBrand == 'Best26') {
         PreNumberBox = '5'
     }
-    else if (prodBrand == 'BestShoes') {
+    else if (prodBrand == 'Bestshoes') {
         PreNumberBox = '3'
     }
     if (date < 10) {
         date = '0' + date;
     }
 
-        if (a < 10) {
-            header.textContent = `${date}` + '/' + `${PreNumberBox}` + '0' + a;
-        }
-        else {
-            header.textContent = `${date}` + '/' + `${PreNumberBox}` + a;
-        }
+    if (a < 10) {
+        header.textContent = `${date}` + '/' + `${PreNumberBox}` + '0' + a;
+    }
+    else {
+        header.textContent = `${date}` + '/' + `${PreNumberBox}` + a;
+    }
 
     container.appendChild(header);
 
@@ -111,7 +111,7 @@ function AddNewBoxButton() {
     container.addEventListener('dragover', dragOverHandler);
     container.addEventListener('drop', drop);
     container.addEventListener('dragstart', handleDragStart);
-    container.addEventListener('dragend', handleDragEnd);  
+    container.addEventListener('dragend', handleDragEnd);
 }
 
 function Sendfordelivery() {
@@ -135,7 +135,7 @@ function Sendfordelivery() {
         }, 1);
         return
     }
-    
+
     if (statusProgram.changeMod != 'no') {
         document.getElementById('success-message').style.display = 'flex'
         setTimeout(() => {
@@ -170,7 +170,7 @@ function Sendfordelivery() {
                     model.characteristics.forEach(char => {
                         if (char.name == 'Цвет') {
                             li.querySelector('.colorArea').textContent = char.value[0]
-                            if (li.querySelector('.colorArea').textContent == 'черный кварц'){
+                            if (li.querySelector('.colorArea').textContent == 'черный кварц') {
                                 li.querySelector('.colorArea').textContent = 'черный'
                             }
                             article.textContent = article.textContent.replace(/[.]/g, '');
@@ -356,7 +356,7 @@ function Sendfordelivery() {
     else if (prodBrand == 'Best26') {
         PreNumberBox = '5'
     }
-    else if (prodBrand == 'BestShoes') {
+    else if (prodBrand == 'Bestshoes') {
         PreNumberBox = '3'
     }
     if (date < 10) {
@@ -448,7 +448,7 @@ document.querySelectorAll('.burger').forEach(burger => {
             document.querySelector('.GifForDelivery').classList.add('off')
             document.getElementById('infoAboutCountBoxes').style.transition = '0s'
             document.querySelector('.BoxforchangeVariantForZIP').style.opacity = 0
-            
+
             document.querySelector('aside p').style.opacity = 0
             document.querySelector('.SectionForBar').style.opacity = 0
             document.getElementById('infoAboutCountBoxes').style.opacity = 0
@@ -490,13 +490,13 @@ function PressButtonDeliveryPost() {
 
 function addKyzForModelsToDilivery() {
     // Получаем размеры из элементов с классом 'sizeElement'
-    
+
     const brand = statusProgram.brand;
     let Models = [];
 
     document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element, index) => {
         const modelInfo = {};
-        
+
         let modelElement = element.querySelector('h5.headerLabelForModel');
         let sizeElement = element.querySelector('.Size');
 
@@ -504,15 +504,15 @@ function addKyzForModelsToDilivery() {
             modelElement.textContent.replace(/[.чЧ]/g, '');
             modelInfo.model = modelElement.textContent;
             modelInfo.size = sizeElement.textContent;
-    
+
             if (brand == 'Best26') {
-                
+
                 modelInfo.model = modelElement.textContent.replace(/[.]/g, '');
-                if (statusProgram.brand == 'Best26'){
-                    if (modelInfo.model == '61' || modelInfo.model == '81' || modelInfo.model == '82' || modelInfo.model == '83' || modelInfo.model == '83'){
+                if (statusProgram.brand == 'Best26') {
+                    if (modelInfo.model == '61' || modelInfo.model == '81' || modelInfo.model == '82' || modelInfo.model == '83' || modelInfo.model == '83') {
                         modelInfo.model += 'ч'
                     }
-                  }
+                }
                 console.log(modelInfo.model)
             } else {
                 modelInfo.model = 'Multimodel'
@@ -520,9 +520,9 @@ function addKyzForModelsToDilivery() {
             Models.push(modelInfo);
         }
     })
-    
+
     // Создаём массив промисов для всех запросов
-    const fetchPromises = Models.map(modelInfo  => fetch(`/kyz?Size=${modelInfo.size}&brand=${brand}&Model=${modelInfo.model}`, { method: 'GET' })
+    const fetchPromises = Models.map(modelInfo => fetch(`/kyz?Size=${modelInfo.size}&brand=${brand}&Model=${modelInfo.model}`, { method: 'GET' })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Ошибка сети: ${response.status}`);
@@ -541,14 +541,14 @@ function addKyzForModelsToDilivery() {
 
     // Выполняем все запросы
     Promise.all(fetchPromises).then(results => {
-        if (statusProgram.brand == 'Best26'){
+        if (statusProgram.brand == 'Best26') {
             results.forEach(({ model, kyzElements }) => {
-                
+
                 console.log(model, kyzElements)
                 // Обновляем элементы на странице
                 document.querySelectorAll(`.sectionForAcceptDeliverynew li[article-numb="${model}"]`).forEach((element, index) => {
                     let modelElement = element.querySelector('h5.headerLabelForModel').textContent;
-                    if (modelElement == '61' || modelElement == '81' || modelElement == '82' || modelElement == '83' || modelElement == '83'){
+                    if (modelElement == '61' || modelElement == '81' || modelElement == '82' || modelElement == '83' || modelElement == '83') {
                         modelElement += 'ч'
                     }
                     let sizeElement = element.querySelector('.Size');
@@ -576,7 +576,7 @@ function addKyzForModelsToDilivery() {
                 document.querySelector('.morningstockes .firstStock').appendChild(box);
             } else if (box.classList.contains('secondStock') && box.classList.contains('Утро')) {
                 document.querySelector('.morningstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Утро')){
+            } else if (box.classList.contains('thirdStock') && box.classList.contains('Утро')) {
                 document.querySelector('.morningstockes .thirdStock').appendChild(box);
             }
 
@@ -584,7 +584,7 @@ function addKyzForModelsToDilivery() {
                 document.querySelector('.eveningstockes .firstStock').appendChild(box);
             } else if (box.classList.contains('secondStock') && box.classList.contains('Вечер')) {
                 document.querySelector('.eveningstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Вечер')){
+            } else if (box.classList.contains('thirdStock') && box.classList.contains('Вечер')) {
                 document.querySelector('.eveningstockes .thirdStock').appendChild(box);
             }
 
@@ -592,7 +592,7 @@ function addKyzForModelsToDilivery() {
                 document.querySelector('.leftoversstockes .firstStock').appendChild(box);
             } else if (box.classList.contains('secondStock') && box.classList.contains('Остатки')) {
                 document.querySelector('.leftoversstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Остатки')){
+            } else if (box.classList.contains('thirdStock') && box.classList.contains('Остатки')) {
                 document.querySelector('.leftoversstockes .thirdStock').appendChild(box);
             }
         });

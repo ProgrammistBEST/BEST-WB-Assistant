@@ -77,10 +77,10 @@ function kyzUpdatestatus(line, dateNow) {
         },
         body: JSON.stringify({ line: line, dateNow }),
     })
-    .then(response => response.json())
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        .then(response => response.json())
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 async function finishDocument(choosedVariant) {
@@ -190,19 +190,19 @@ async function finishDocument(choosedVariant) {
                 stickerAreapartB: order.querySelector('.stickerAreapartB').textContent,
             }
             let fullKyzArea;
-	    if (order.querySelector('.FullkyzArea').textContent.length > 50){
-		fullKyzArea = order.querySelector('.FullkyzArea').textContent
-	    } else {
-		fullKyzArea = order.querySelector('.kyzArea').textContent
-	    }
+            if (order.querySelector('.FullkyzArea').textContent.length > 50) {
+                fullKyzArea = order.querySelector('.FullkyzArea').textContent
+            } else {
+                fullKyzArea = order.querySelector('.kyzArea').textContent
+            }
             let NewNumberStickers = order.querySelector('.stickerAreapartA').textContent.toString() + order.querySelector('.stickerAreapartB').textContent.toString()
             box.orderList.push(orderItem)
-            listforNewExcel[countBox] = { artikle: order.querySelector('h5.headerLabelForModel').textContent, order: order.querySelector('.stickerAreaorderId').textContent, sticker: NewNumberStickers, fullKyz: fullKyzArea};
-            
+            listforNewExcel[countBox] = { artikle: order.querySelector('h5.headerLabelForModel').textContent, order: order.querySelector('.stickerAreaorderId').textContent, sticker: NewNumberStickers, fullKyz: fullKyzArea };
+
             if (choosedVariant != 7) {
                 order.classList.add('didItem')
             }
-            
+
             countBox++
         })
 
@@ -332,7 +332,7 @@ async function finishDocument(choosedVariant) {
             orientation: 'landscape',
             compress: true,
         });
-        
+
         doc.addFont('../fonts/DejaVuSans.ttf', 'DejaVuSans', 'normal');
         doc.addFont('../fonts/DejaVuSansMonoBoldOblique.ttf', 'DejaVuSansBold', 'bold');
         doc.setFont('DejaVuSansBold', 'bold');
@@ -455,7 +455,7 @@ async function finishDocument(choosedVariant) {
             if (fileBrand == 'Best26') {
                 url = `/download?fileBrand=${encodeURIComponent('EVA')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
-            else if (fileBrand == 'BestShoes') {
+            else if (fileBrand == 'Bestshoes') {
                 url = `/download?fileBrand=${encodeURIComponent('BEST')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
             else if (fileBrand == 'Armbest') {
@@ -480,7 +480,7 @@ async function finishDocument(choosedVariant) {
             } else {
                 data.BoxNumber = ""; // Оставляем пустым для остальных
             }
-            
+
             const row = worksheet.getRow(currentRow);
 
             columns.forEach((col, index) => {
@@ -538,7 +538,7 @@ async function finishDocument(choosedVariant) {
                     imgKYZ.src = imageUrl;
                     canvas.remove()
                     doc.addImage(imagesKYZPDF, 'JPEG', 0, 0, 58, 40, null, 'FAST');
-                    if (statusProgramLoadPrintPDFDOC.brand == 'BestShoes') {
+                    if (statusProgramLoadPrintPDFDOC.brand == 'Bestshoes') {
                         doc.setFillColor(255, 255, 255);
                         doc.rect(2, 2, 28, 25, 'F');
                         if (article.length > 7) {
@@ -625,7 +625,7 @@ async function finishDocument(choosedVariant) {
             doc.addPage([58, 40], 'landscape');
             try {
                 const response = await fetch(url);
-    
+
                 if (!response.ok) {
                     throw new Error('Ошибка загрузки изображения');
                 }
@@ -663,7 +663,7 @@ async function finishDocument(choosedVariant) {
 
     // Создание ссылки для загрузки zip-файла
     textFormessage.textContent = `Создание архива с файлами`;
-    
+
     // Выравнивание заголовков по центру и выделение жирным шрифтом
     worksheet.getRow(1).eachCell((cell) => {
         cell.alignment = { horizontal: 'center' };
@@ -742,12 +742,12 @@ async function finishDocument(choosedVariant) {
     statusProgram.loadMod = 'no';
 
     document.querySelectorAll('.sectionForAcceptDeliveryold .Boxtransferredfordelivery li.didItem').forEach(item => {
-        item.id += `did${Math.random()}`;    
+        item.id += `did${Math.random()}`;
         let kyzline = item.querySelector('.kyzArea').textContent
         let kyzSize = item.querySelector('.Size').textContent
         kyzUpdatestatus(kyzline, dateNow)
     })
-    
+
     let boxNumberForDB = 0
     boxlist.forEach(box => {
         box.orderList = box.orderList.map(order => {

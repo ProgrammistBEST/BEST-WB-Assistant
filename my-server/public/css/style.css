@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap");
 
 * {
     margin: 0;
@@ -14,9 +14,9 @@ button:focus {
 :root {
     --color-primary: #c4e5ff;
     --color-middle: #fafafa;
-    --color-hover-button: #5AA9E6;
+    --color-hover-button: #5aa9e6;
     --color-active-button: #3b9de9;
-    --color-additional: #F9F9F9;
+    --color-additional: #f9f9f9;
     --color-background: white;
     --color-pseudo-element: rgb(255, 255, 255);
     --color-font-primary: rgb(248, 242, 242);
@@ -35,10 +35,10 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    user-select: none;  */ 
+    user-select: none;  */
 }
-a{
-    color: var(--color-font-primary)
+a {
+    color: var(--color-font-primary);
 }
 ul {
     margin-bottom: -1px;
@@ -75,18 +75,18 @@ nav {
     transition: 0.1s;
 }
 .nav-link::after {
-	content: "";
+    content: "";
     display: block;
     position: relative;
     left: 0;
     bottom: -3px;
     width: 0;
-    height: 2px; 
+    height: 2px;
     background-color: var(--color-pseudo-element);
     transition: width 0.5s;
 }
 .nav-link:hover.nav-link::after {
-	content: "";
+    content: "";
     width: 100%;
     display: block;
     position: relative;
@@ -94,7 +94,7 @@ nav {
     bottom: -3px;
     height: 2px;
     background-color: var(--color-pseudo-element);
-    transition: width 0.5s; 
+    transition: width 0.5s;
 }
 .MainUl {
     display: flex;
@@ -160,7 +160,7 @@ nav {
     position: absolute;
     background-color: #f8f9fa;
     min-width: 160px;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     z-index: 1;
 }
 .navbar-nav .dropdown:hover .dropdown-menu {
@@ -182,13 +182,13 @@ nav {
     color: var(--color-font-middle);
 }
 .brand-1::after {
-    content: 'Armbest';
+    content: "Armbest";
 }
 .brand-2::after {
-    content: 'Best26';
+    content: "Best26";
 }
 .brand-3::after {
-    content: 'BestShoes';
+    content: "Bestshoes";
 }
 .bpxelem {
     user-select: none; /* Запрещает выделение текста внутри элемента */
@@ -238,7 +238,7 @@ nav {
     margin-bottom: 0;
 }
 .listOrders .stickerAreaorderId::before {
-    content: 'Стик ';
+    content: "Стик ";
     font-size: 10px;
     font-weight: 400;
 }

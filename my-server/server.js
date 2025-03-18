@@ -27,14 +27,14 @@ const socketIo = require('socket.io');
 const server = http.createServer();
 
 const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
 io.on('connection', (socket) => {
-  console.log('Client connected');
+    console.log('Client connected');
 });
 
 app.use(cors()); // Разрешает все источники
@@ -195,7 +195,7 @@ app.get('/file', (req, res) => {
 // KYZ
 app.get('/kyzSizes', (req, res) => {
     const brand = req.query.brand;
-    if (brand != 'Best26'){
+    if (brand != 'Best26') {
         const query = `
             SELECT Size, COUNT(*) as Quantity
             FROM lines
@@ -289,7 +289,7 @@ app.post('/kyzComeback', (req, res) => {
 
     const query = `UPDATE lines SET Status = 'Comeback' WHERE line = ?  AND brand = ? AND Size= ?`;
     console.log(req.body)
-    dbKYZ.run(query, [line, brand, size], function(err) {
+    dbKYZ.run(query, [line, brand, size], function (err) {
         if (err) {
             console.error('Ошибка при выполнении запроса', err);
             res.status(500).json({ error: 'Ошибка при выполнении запроса' });
@@ -317,7 +317,7 @@ app.post('/getlineToFinishDocument', (req, res) => {
         if (!result) {
             return res.status(404).json({ error: 'Данные не найдены' });
         }
-       
+
         res.setHeader('Content-Type', 'application/pdf');
         res.send(result.data);
     });
@@ -328,9 +328,9 @@ app.post('/SaveDataKyzToDB', (req, res) => {
     const { date, delivery, quantity } = req.body;
     if (typeof delivery !== 'string') {
         return res.status(400).json({ error: 'Delivery must be a string' });
-      }    
+    }
     const stmt = saveDataAboutDelivery.prepare('INSERT INTO DeliveryData (date, delivery, quantity) VALUES (?, ?, ?)');
-    stmt.run(date,delivery,quantity, function(err) {
+    stmt.run(date, delivery, quantity, function (err) {
         if (err) {
             console.error('Ошибка при выполнении запроса', err);
             res.status(500).json({ error: 'Ошибка при выполнении запроса' });
@@ -343,11 +343,11 @@ app.post('/SaveDataKyzToDB', (req, res) => {
 
 // Обновление статуса киза
 app.put('/kyzUpdatestatus', (req, res) => {
-    const { line, dateNow  } = req.body;
+    const { line, dateNow } = req.body;
     const stmt = dbKYZ.prepare("UPDATE lines SET Status = 'Used', created_at = ? WHERE line = ?");
-    stmt.run(dateNow, line, function(err) {
+    stmt.run(dateNow, line, function (err) {
         if (err) {
-            console.error('Error during update:', err); 
+            console.error('Error during update:', err);
             res.status(500).json({ message: 'Database error', error: err });
         } else {
             res.json({ message: 'Status updated successfully', changes: this.changes });
@@ -373,7 +373,7 @@ app.post('/uploadNewKyz', upload.single('pdf'), async (req, res) => {
 
         // Обработка PDF
         await processPDF(fileBuffer, fileName, brandData, io);
-        
+
         res.status(200).send({ message: 'File processed successfully.' });
     } catch (err) {
         console.error('Error processing file:', err);
@@ -385,13 +385,13 @@ app.post('/uploadNewKyz', upload.single('pdf'), async (req, res) => {
 app.get('/getdeliveryinfo/:id', (req, res) => {
     const deliveryId = req.params.id;
     saveDataAboutDelivery.get('SELECT * FROM DeliveryData WHERE id = ?', [deliveryId], (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (!row) {
-        return res.status(404).json({ error: 'Delivery not found' });
-      }
-      res.status(200).json(row);
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (!row) {
+            return res.status(404).json({ error: 'Delivery not found' });
+        }
+        res.status(200).json(row);
     });
 });
 
@@ -407,7 +407,7 @@ const transferAndDeleteOldRecords = () => {
             FROM lines 
             WHERE Status = 'Used' AND created_at <= datetime('now', '-3 day')
         `;
-        dbKYZ.run(insertStmt, function(err) {
+        dbKYZ.run(insertStmt, function (err) {
             if (err) {
                 console.error('Error during transferring old records:', err);
                 dbKYZ.run("ROLLBACK"); // Откат транзакции в случае ошибки
@@ -419,7 +419,7 @@ const transferAndDeleteOldRecords = () => {
                 WHERE Status = 'Used' AND created_at <= datetime('now', '-3 day')
             `;
 
-            dbKYZ.run(deleteStmt, function(err) {
+            dbKYZ.run(deleteStmt, function (err) {
                 if (err) {
                     console.error('Error during deleting old records:', err);
                     dbKYZ.run("ROLLBACK"); // Откат транзакции в случае ошибки
@@ -457,8 +457,8 @@ app.get('/getModelBest26', (req, res) => {
         }
     });
 });
-app.get('/getModelBestShoes', (req, res) => {
-    const sql = 'SELECT * FROM product_sizesBestShoes'; // Выборка всех записей из таблицы
+app.get('/getModelBestshoes', (req, res) => {
+    const sql = 'SELECT * FROM product_sizesBestshoes'; // Выборка всех записей из таблицы
     // Выполнение SQL запроса к базе данных
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -475,14 +475,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Маршрут для обновления базы данных
 app.post('/update-element', (req, res) => {
-    const { vendorcode, wbsize , pair} = req.body;
+    const { vendorcode, wbsize, pair } = req.body;
 
     if (typeof vendorcode === 'undefined' || typeof wbsize === 'undefined' || typeof pair === 'undefined') {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
     const query = `UPDATE product_sizes SET pair = ? WHERE vendor_code = ? AND wb_size = ?`;
-    db.run(query, [pair, vendorcode, wbsize], function(err) {
+    db.run(query, [pair, vendorcode, wbsize], function (err) {
         if (err) {
             return res.status(500).json({ success: false, error: err.message });
         }
@@ -492,10 +492,10 @@ app.post('/update-element', (req, res) => {
 
 // Маршрут для удаления элемента
 app.post('/delete-element', (req, res) => {
-    const { vendorcode, wbsize , pair} = req.body;
+    const { vendorcode, wbsize, pair } = req.body;
     // SQL-запрос на удаление элемента из базы данных
     const query = `DELETE FROM product_sizes WHERE vendor_code = ? AND wb_size = ? AND pair = ?`;
-    db.run(query, [vendorcode, wbsize, pair], function(err) {
+    db.run(query, [vendorcode, wbsize, pair], function (err) {
         if (err) {
             console.error('Database delete error:', err);
             return res.status(500).json({ success: false, error: err.message });
@@ -512,7 +512,7 @@ app.post('/add-element', (req, res) => {
     const { vendorcode, wbsize, pair } = req.body;
     // SQL-запрос на добавление нового элемента в базу данных
     const query = `INSERT INTO product_sizes (vendor_code, wb_size, pair) VALUES (?, ?, ?)`;
-    db.run(query, [vendorcode, wbsize, pair], function(err) {
+    db.run(query, [vendorcode, wbsize, pair], function (err) {
         if (err) {
             console.error('Database insert error:', err);
             return res.status(500).json({ success: false, error: err.message });
@@ -589,8 +589,8 @@ app.get('/getWbSizeBest26', async (req, res) => {
     }
 });
 
-// Получить размер для BestShoes
-app.get('/getWbSizeBestShoes', async (req, res) => {
+// Получить размер для Bestshoes
+app.get('/getWbSizeBestshoes', async (req, res) => {
     const skus = req.query.skus;
 
     // Проверяем, что SKU передан в запросе
@@ -614,7 +614,7 @@ app.get('/getWbSizeBestShoes', async (req, res) => {
         // Если размер не найден
         res.status(404).send('Размер не найден');
     } catch (error) {
-        console.error(`Ошибка при выполнении запроса для BestShoes SKU ${skus}:`, error.message);
+        console.error(`Ошибка при выполнении запроса для Bestshoes SKU ${skus}:`, error.message);
         res.status(500).send('Ошибка сервера');
     }
 });
@@ -629,16 +629,6 @@ app.get('/getWbSizeBestShoes', async (req, res) => {
 
 // Эндпоинт для формирования отчета
 const ExcelJS = require('exceljs');
-
-// Функция для выполнения запроса к MySQL
-function queryMySQL(pool, query, params) {
-    return new Promise((resolve, reject) => {
-        pool.query(query, params, (err, rows) => {
-            if (err) return reject(err);
-            resolve(rows);
-        });
-    });
-}
 
 // Функция для выполнения запроса к SQLite
 function querySQLite(db, query, params) {
@@ -657,27 +647,38 @@ app.get('/report_hs', async (req, res) => {
             return res.status(400).json({ error: 'Параметр brand обязателен' });
         }
 
+        // Нормализация имени бренда (нижний регистр)
+        const normalizedBrand = brand.trim().toLowerCase();
+
+        // Запрос для получения данных из таблицы lines (SQLite)
         // Запрос для получения данных из таблицы lines (SQLite)
         const reportQuery = `
-            SELECT Model, Size, COUNT(CASE WHEN Status = 'Waiting' THEN 1 ELSE NULL END) AS Quantity
+            SELECT Model, Size, 
+                   COUNT(CASE WHEN Status = 'Waiting' THEN 1 ELSE NULL END) AS Quantity_Waiting,
+                   COUNT(CASE WHEN Status = 'Comeback' THEN 1 ELSE NULL END) AS Quantity_Comeback
             FROM \`lines\`
-            WHERE brand = ?
+            WHERE LOWER(brand) = ?
             GROUP BY Model, Size
         `;
-
-        // Получаем данные из таблицы lines (SQLite)
-        const reportRows = await querySQLite(dbKYZ, reportQuery, [brand]);
-
+        const reportRows = await querySQLite(dbKYZ, reportQuery, [normalizedBrand]);
+        console.log("reportMrows:", reportRows)
         // Создаем карту для быстрого доступа к данным из таблицы lines
-        const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity]));
+        const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity_Waiting+row.Quantity_Comeback]));
+        console.log("reportMap", reportMap)
+        // Запрос к таблице products (MySQL)
+        const [modelsRows] = await pool.execute(
+            `SELECT article AS Model, size AS Size
+             FROM products
+             WHERE company_name = ?`,
+            [normalizedBrand]
+        );
+        console.log('[INFO] Models from products:', modelsRows);
 
-        // Получаем данные о продуктах из таблицы products (MySQL)
-        const modelsQuery = `
-            SELECT article AS Model, size AS Size
-            FROM products
-            WHERE company_name = ?
-        `;
-        const modelsRows = await queryMySQL(pool, modelsQuery, [brand]);
+        // Проверка на пустые данные
+        if (!modelsRows || modelsRows.length === 0) {
+            console.warn(`[WARNING] No data found in products for brand: ${brand}`);
+            return res.status(404).json({ error: `No data found for brand: ${brand}` });
+        }
 
         // Логика для разных брендов
         const available = [];
@@ -685,14 +686,15 @@ app.get('/report_hs', async (req, res) => {
 
         if (brand === 'Armbest' || brand === 'Bestshoes') {
             // Для Armbest и Bestshoes берем только уникальные размеры
+            console.log(brand)
             const uniqueSizes = [...new Set(modelsRows.map(row => row.Size))];
             uniqueSizes.forEach(size => {
-                const key = `multimodel_${size}`;
+                const key = `Multimodel_${size}`;
                 const quantity = reportMap.get(key) || 0;
                 const targetArray = quantity > 10 ? available : shortage;
-                targetArray.push({ Model: 'multimodel', Size: size, Quantity: quantity });
-            });
-        } else if (brand === 'Best26') {
+                targetArray.push({ Model: 'Multimodel', Size: size, Quantity: quantity });
+            })
+        } else if (normalizedBrand === 'best26') {
             // Для Best26 проверяем каждую модель и размер
             modelsRows.forEach(modelRow => {
                 const key = `${modelRow.Model}_${modelRow.Size}`;
@@ -704,6 +706,10 @@ app.get('/report_hs', async (req, res) => {
                 }
             });
         }
+
+        // Логирование результатов
+        console.log('[INFO] Available:', available);
+        console.log('[INFO] Shortage:', shortage);
 
         // Создаем Excel-отчет
         const workbook = createExcelReport(available, shortage);
@@ -762,7 +768,7 @@ app.listen(port, () => {
 // Запуск сервера сокетов
 server.listen(portSocket, () => {
     console.log(`WebSocket is running on port https://localhost:${portSocket}`);
-  });
+});
 // Закрытие подключения к базе данных при завершении работы сервера
 process.on('SIGINT', () => {
     db.close((err) => {

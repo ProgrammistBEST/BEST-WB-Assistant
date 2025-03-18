@@ -3,7 +3,7 @@ const boxes = {};
 const apiUrlNewQursts = "https://suppliers-api.wildberries.ru/api/v3/supplies";
 
 document.getElementById('NavNewOrders').style.backgroundColor = 'lightgrey'
-document.getElementById('NavDelivery').style.backgroundColor = ''  
+document.getElementById('NavDelivery').style.backgroundColor = ''
 
 const elementsAndModels = {
   '093-3': 'first',
@@ -369,19 +369,19 @@ const ArticlesWith1inBox = [
 ];
 
 const ArticlesWith5inBox = [
-  '100','100-1','102','102-1','102-2','102-3','102-4','103','103-1','103-2','103-3','103-4'
+  '100', '100-1', '102', '102-1', '102-2', '102-3', '102-4', '103', '103-1', '103-2', '103-3', '103-4'
 ];
 
 const ArticlesWith10inBox = [
   '31', '32', '33', '36', '37', '80', '80-black',
-  '26', '401','410','400','402', '401-1', '411', '411-1', '401-1', '401-1-1', '401-1-2', '401-1-3', '401-1-4', '401-1-5', '401-1-6', '401-1-7', '401-1-8', '401-1-9', '401-1-10', '401-1-11', '401-1-12', '401-1-13',
+  '26', '401', '410', '400', '402', '401-1', '411', '411-1', '401-1', '401-1-1', '401-1-2', '401-1-3', '401-1-4', '401-1-5', '401-1-6', '401-1-7', '401-1-8', '401-1-9', '401-1-10', '401-1-11', '401-1-12', '401-1-13',
   '411-1', '411-1-1', '411-1-2', '411-1-3', '411-1-4', '411-1-5', '411-1-6', '411-1-7', '411-1-8', '411-1-9', '411-1-10', '411-1-11', '411-1-12', '411-1-13',
   '403', '60', '412', '61', '62', '63',
-  '81', '82', '83','82-02', '84'
+  '81', '82', '83', '82-02', '84'
 ];
 const ArticlesWith15inBox = [
-  '52','51','50','24','22','10-3',
-  '10-2','10','380','180','10-3', '10-3-1', '10-3-2', '10-3-3', '10-3-4', '10-3-5', '10-3-6', '10-3-7', '10-3-8', '10-3-9', '10-3-10', '10-3-11', '10-3-12', '10-3-13',
+  '52', '51', '50', '24', '22', '10-3',
+  '10-2', '10', '380', '180', '10-3', '10-3-1', '10-3-2', '10-3-3', '10-3-4', '10-3-5', '10-3-6', '10-3-7', '10-3-8', '10-3-9', '10-3-10', '10-3-11', '10-3-12', '10-3-13',
   '10-2', '10-2-1', '10-2-2', '10-2-3', '10-2-4', '10-2-5', '10-2-6', '10-2-7', '10-2-8', '10-2-9', '10-2-10', '10-2-11', '10-2-12', '10-2-13',
   '1-3', '1-3-1', '1-3-2', '1-3-3', '1-3-4', '1-3-5', '1-3-6', '1-3-7', '1-3-8', '1-3-9', '1-3-10', '1-3-11', '1-3-12', '1-3-13', '70', '70-1', '71', '71-2', '71-5', '71-6', '71-7', '72', '72-2', '72-3', '72-5', '72-6', '72-7'
 ];
@@ -421,7 +421,7 @@ function truncateIfRepeated(code) {
   const length = code.length;
 
   if (length < 2 || length % 2 !== 0) {
-      return code;
+    return code;
   }
 
   const halfLength = length / 2;
@@ -429,26 +429,27 @@ function truncateIfRepeated(code) {
   const secondHalf = code.slice(halfLength);
 
   if (firstHalf === secondHalf) {
-      return firstHalf;
+    return firstHalf;
   }
 
   return code;
 }
 
 // Функция удаления коробки
-function deleteBox(Box){
+function deleteBox(Box) {
   let element = Box.parentElement;
   if (element) {
     let confirmMessage = confirm(`Вы действительно хотите удалить коробку №${element.querySelector('h3.p_article_put_order_in_box').textContent}?`);
     if (confirmMessage) {
-        element.remove();
+      element.remove();
     } else {
-        return;
+      return;
     }
   } else {
     console.error('Parent element not found.');
-}}
-  
+  }
+}
+
 // Функция, вызываемая при начале перетаскивания элемента
 function drag(ev) {
   ev.dataTransfer.setData("text", ev.target.id);
@@ -479,7 +480,7 @@ function endDrag() {
     document.removeEventListener('mouseup', endDrag);
     draggedElement.removeEventListener('dragend', endDrag);
     draggedElement = null;
-  }  
+  }
 }
 
 // Обработчик события dragover для разрешения скроллинга
@@ -508,7 +509,7 @@ function drop(ev) {
 
   let data = ev.dataTransfer.getData("text");
   let draggedElement = document.getElementById(data);
-  if (draggedElement.tagName != 'LI'){
+  if (draggedElement.tagName != 'LI') {
     alert('Что ты мне подсунул?', draggedElement.tagName, draggedElement)
     return
   }
@@ -525,14 +526,14 @@ function drop(ev) {
       let itemCount = parseInt(itemCountElement.textContent);
       itemCountElement.textContent = itemCount + 1;
     }
-  // } else if (ev.target.tagName === 'LI' && ev.target.parentElement.tagName === 'UL') {
-  //   ev.target.parentElement.appendChild(draggedElement);
+    // } else if (ev.target.tagName === 'LI' && ev.target.parentElement.tagName === 'UL') {
+    //   ev.target.parentElement.appendChild(draggedElement);
   } else {
     console.error('Invalid drop target:', ev.target);
   }
 }
 
-function removeColorFromArticle(article){
+function removeColorFromArticle(article) {
   const regex = /-\D+$|\s\D+$/;
   const cleanedArticle = article.replace(regex, '');
   return cleanedArticle;
@@ -556,49 +557,49 @@ async function getQuests() {
 
   if (compressedOrders == null) {
 
-  }  
+  }
 
   Object.values(cargoData).forEach(cargoArray => {
     Object.values(cargoArray.orders).forEach(ord => {
-        if (!boxes[ord.article]) {
-          boxes[ord.article] = [];
-        }
-        boxes[ord.article].push(ord);
-        let artCheck = ord.article.split('-')[0].trim().replace(/[-.]/g, '');
-        artCheck = truncateIfRepeated(artCheck)
-        if (checkModelBelongsToElement(artCheck) == 'first') {
-          ord['stock'] = 'firstStock';
-          ord['maxItems'] = 20;
-          ord['numberItems'] = 0;
-        } else if (checkModelBelongsToElement(artCheck) == 'second') {
-          ord['stock'] = 'secondStock';
-          ord['maxItems'] = 15;
-          ord['numberItems'] = 0;
-        } else {
-          ord['stock'] = 'thirdStock';
-          ord['maxItems'] = 20;
-          ord['numberItems'] = 0;
-        }
-        if (ArticlesWith1inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 1;
-        }
-	else if (ArticlesWith5inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 5;
-        }
-        else if (ArticlesWith10inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 10;
-        }
-        else if (ArticlesWith15inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 15;
-        }
-        else if (ArticlesWith20inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 20;
-        }
-        else if (ArticlesWith40inBox.includes(removeColorFromArticle(artCheck))) {
-          ord['maxItems'] = 40;
-        }
-	// console.log('Артикул: ' + artCheck + " Количество пар в кор.: " + ord['maxItems']);
-      })
+      if (!boxes[ord.article]) {
+        boxes[ord.article] = [];
+      }
+      boxes[ord.article].push(ord);
+      let artCheck = ord.article.split('-')[0].trim().replace(/[-.]/g, '');
+      artCheck = truncateIfRepeated(artCheck)
+      if (checkModelBelongsToElement(artCheck) == 'first') {
+        ord['stock'] = 'firstStock';
+        ord['maxItems'] = 20;
+        ord['numberItems'] = 0;
+      } else if (checkModelBelongsToElement(artCheck) == 'second') {
+        ord['stock'] = 'secondStock';
+        ord['maxItems'] = 15;
+        ord['numberItems'] = 0;
+      } else {
+        ord['stock'] = 'thirdStock';
+        ord['maxItems'] = 20;
+        ord['numberItems'] = 0;
+      }
+      if (ArticlesWith1inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 1;
+      }
+      else if (ArticlesWith5inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 5;
+      }
+      else if (ArticlesWith10inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 10;
+      }
+      else if (ArticlesWith15inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 15;
+      }
+      else if (ArticlesWith20inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 20;
+      }
+      else if (ArticlesWith40inBox.includes(removeColorFromArticle(artCheck))) {
+        ord['maxItems'] = 40;
+      }
+      // console.log('Артикул: ' + artCheck + " Количество пар в кор.: " + ord['maxItems']);
+    })
   })
 
   let a = 0
@@ -606,40 +607,40 @@ async function getQuests() {
   async function getWbSizeFromApi(skus) {
     const response = await fetch(`http://localhost:3000/getWbSize${statusProgram.brand}?skus=${skus}`);
     if (response.ok) {
-        const data = await response.json();
-        return data.tech_size;
+      const data = await response.json();
+      return data.tech_size;
     } else {
-        throw new Error('Размер не найден');
+      throw new Error('Размер не найден');
     }
   }
 
   async function assignSizeToParagraph(items) {
-      for (let key in items) {
-          if (items.hasOwnProperty(key)) {
-              try {
-                for (let i = 0; i < items[key].length; i++) {
-                  let wbSize = await getWbSizeFromApi(items[key][i].skus[0]);
-                  items[key][i].size = wbSize;
-                }
-              } catch (error) {
-                  console.error(error);
-              }
-            }
+    for (let key in items) {
+      if (items.hasOwnProperty(key)) {
+        try {
+          for (let i = 0; i < items[key].length; i++) {
+            let wbSize = await getWbSizeFromApi(items[key][i].skus[0]);
+            items[key][i].size = wbSize;
           }
-          // console.log(boxes)
-      let matchFound = false;
-      Object.keys(boxes).forEach(article => {
-        if (orderList!= null || orderList!= undefined) {
-          Object.values(orderList).forEach(order => {
-            if (order.article == boxes[article][0].article && order.createdAt == boxes[article][0].createdAt && order.nmId == boxes[article][0].nmId && order.skus[0] == boxes[article][0].skus[0]){
-              matchFound = true;
-            }
-          })
+        } catch (error) {
+          console.error(error);
         }
-        if (matchFound == false) {
-          a++
-          createContainerForBox(article, boxes[article], a);  
-        }
+      }
+    }
+    // console.log(boxes)
+    let matchFound = false;
+    Object.keys(boxes).forEach(article => {
+      if (orderList != null || orderList != undefined) {
+        Object.values(orderList).forEach(order => {
+          if (order.article == boxes[article][0].article && order.createdAt == boxes[article][0].createdAt && order.nmId == boxes[article][0].nmId && order.skus[0] == boxes[article][0].skus[0]) {
+            matchFound = true;
+          }
+        })
+      }
+      if (matchFound == false) {
+        a++
+        createContainerForBox(article, boxes[article], a);
+      }
     });
   }
   assignSizeToParagraph(boxes);
@@ -652,8 +653,8 @@ let boxescountInPanel = 0;
 
 function createContainerForBox(article, items, a) {
   let preArt = article;
-  if (statusProgram.brand == 'Best26'){
-    if (preArt == '61' || preArt == '81' || preArt == '82' || preArt == '83' || preArt == '83'){
+  if (statusProgram.brand == 'Best26') {
+    if (preArt == '61' || preArt == '81' || preArt == '82' || preArt == '83' || preArt == '83') {
       preArt += 'ч'
     }
   }
@@ -665,7 +666,7 @@ function createContainerForBox(article, items, a) {
   const header = document.createElement('h3');
   header.className = 'p_article_put_order_in_box';
 
-  header.textContent = article;    
+  header.textContent = article;
   container.appendChild(header);
   const list = document.createElement('ul');
 
@@ -677,7 +678,7 @@ function createContainerForBox(article, items, a) {
   deleteButton.textContent = 'X';
   deletBox.appendChild(deleteButton);
   container.appendChild(deletBox);
-  deletBox.addEventListener('click', function() {
+  deletBox.addEventListener('click', function () {
     deleteBox(deletBox);
   });
   list.style.height = '100%';
@@ -690,7 +691,7 @@ function createContainerForBox(article, items, a) {
   const maxItemsinbox = document.createElement('p');
   maxItemsinbox.className = 'headerLabelForModel maxItemsinbox';
 
-  const StockArea= document.createElement('p');
+  const StockArea = document.createElement('p');
   StockArea.className = 'StockArea';
 
   const Itemsinbox = document.createElement('p');
@@ -698,18 +699,18 @@ function createContainerForBox(article, items, a) {
   container.classList.add(statusProgram.NameDelivery);
   container.classList.add(statusProgram.brand);
 
-  if (statusProgram.brand == 'Armbest'){
+  if (statusProgram.brand == 'Armbest') {
     container.style.backgroundColor = '#8dddbb'
   }
-  else if (statusProgram.brand == 'Best26'){
+  else if (statusProgram.brand == 'Best26') {
     container.style.backgroundColor = 'rgb(169 169 220)'
   }
-  else if (statusProgram.brand == 'BestShoes'){
+  else if (statusProgram.brand == 'Bestshoes') {
     container.style.backgroundColor = '#C4E5FF'
   }
 
   items.forEach(item => {
-    if(!item.sticker){
+    if (!item.sticker) {
       return;
     }
     boxcountInPanel++
@@ -717,7 +718,7 @@ function createContainerForBox(article, items, a) {
     container.classList.add(statusProgram.NameDelivery);
     const listItem = document.createElement('li');
     listItem.draggable = true;
-    listItem.id = `Article${article}-${x}-${statusProgram.brand}-` ;
+    listItem.id = `Article${article}-${x}-${statusProgram.brand}-`;
     listItem.className = `box bpxelem ${statusProgram.brand}`
     listItem.setAttribute('article-numb', preArt.replace(/[.]/g, ''));
 
@@ -727,7 +728,7 @@ function createContainerForBox(article, items, a) {
       StockArea.textContent = "Первый";
 
     } else if (item.stock == 'secondStock') {
-      
+
       container.className += ' secondStock';
       StockArea.textContent = "Второй";
     }
@@ -737,88 +738,88 @@ function createContainerForBox(article, items, a) {
 
     }
 
-    const p1= document.createElement('p');
+    const p1 = document.createElement('p');
     p1.className = 'headerLabelForModel Size';
     p1.textContent = item.size;
 
-    const kyzArea= document.createElement('p');
+    const kyzArea = document.createElement('p');
     kyzArea.className = 'kyzArea';
     kyzArea.setAttribute('data-size', item.size);
 
-    const FullkyzArea= document.createElement('p');
+    const FullkyzArea = document.createElement('p');
     FullkyzArea.className = 'FullkyzArea';
     FullkyzArea.setAttribute('FullkyzArea', item.size);
     FullkyzArea.style.display = 'none'
 
-    const colorArea= document.createElement('p');
+    const colorArea = document.createElement('p');
     colorArea.className = 'colorArea';
     colorArea.textContent = "";
     colorArea.style.display = 'none'
 
-    const stickerArea= document.createElement('div');
+    const stickerArea = document.createElement('div');
     stickerArea.className = 'stickerArea';
     stickerArea.textContent = article.sticker;
 
-    const stickerAreaBarcode= document.createElement('p');
+    const stickerAreaBarcode = document.createElement('p');
     stickerAreaBarcode.textContent = item.sticker.barcode;
     stickerAreaBarcode.className = 'stickerAreaBarcode';
     stickerAreaBarcode.style.display = 'none';
-    stickerArea.appendChild(stickerAreaBarcode)  
+    stickerArea.appendChild(stickerAreaBarcode)
 
-    const stickerAreaFile= document.createElement('p');
+    const stickerAreaFile = document.createElement('p');
     stickerAreaFile.textContent = item.sticker.file;
     stickerAreaFile.className = 'stickerAreaFile';
     stickerAreaFile.style.display = 'none';
     stickerArea.appendChild(stickerAreaFile)
 
-    const stickerAreaorderId= document.createElement('p');
+    const stickerAreaorderId = document.createElement('p');
     stickerAreaorderId.textContent = item.sticker.orderId;
     stickerAreaorderId.className = 'stickerAreaorderId';
     stickerArea.appendChild(stickerAreaorderId)
 
-    const stickerAreapartA= document.createElement('p');
+    const stickerAreapartA = document.createElement('p');
     stickerAreapartA.textContent = item.sticker.partA;
     stickerAreapartA.className = 'stickerAreapartA';
     stickerAreapartA.style.display = 'none';
 
     stickerArea.appendChild(stickerAreapartA)
 
-    const stickerAreapartB= document.createElement('p');
+    const stickerAreapartB = document.createElement('p');
     stickerAreapartB.textContent = item.sticker.partB;
     stickerAreapartB.className = 'stickerAreapartB';
     stickerAreapartB.style.display = 'none';
 
     stickerArea.appendChild(stickerAreapartB)
 
-    const createAt= document.createElement('p');
+    const createAt = document.createElement('p');
     createAt.textContent = item.createdAt;
     createAt.className = 'createAt';
     createAt.style.display = 'none';
-    
-    const skusArea= document.createElement('p');
+
+    const skusArea = document.createElement('p');
     skusArea.textContent = item.skus[0];
     skusArea.className = 'skusArea';
     skusArea.style.display = 'none';
 
-    const nmId= document.createElement('p');
+    const nmId = document.createElement('p');
     nmId.textContent = item.nmId;
     nmId.style.display = 'none'
     nmId.className = 'nmId';
 
-    const StockAreaHide= document.createElement('p');
+    const StockAreaHide = document.createElement('p');
     StockAreaHide.className = 'StockAreaHide';
     StockAreaHide.textContent = item.stock;
     StockAreaHide.style.display = 'none'
 
-    const brandAreaHide= document.createElement('p');
+    const brandAreaHide = document.createElement('p');
     brandAreaHide.className = 'brandAreaHide';
     brandAreaHide.textContent = statusProgram.brand;
     brandAreaHide.style.display = 'none'
 
-    const h5= document.createElement('h5');
+    const h5 = document.createElement('h5');
     h5.className = 'headerLabelForModel';
     h5.textContent = article;
-    
+
     maxItemsinbox.textContent = item.maxItems;
     Itemsinbox.textContent = x;
 
@@ -834,9 +835,9 @@ function createContainerForBox(article, items, a) {
     listItem.appendChild(skusArea);
     listItem.appendChild(nmId);
     list.appendChild(listItem);
-    
+
     progressedOrders++;
-    progressBarOrder.style.width = (progressedOrders/totalOrders) * 100 + '%'
+    progressBarOrder.style.width = (progressedOrders / totalOrders) * 100 + '%'
   });
 
   progressBarOrder.textContent = 'Готово'
@@ -847,7 +848,7 @@ function createContainerForBox(article, items, a) {
 
   container.style.transition = '2s'
   container.style.opacity = 0
-  container.style.height = 0 
+  container.style.height = 0
 
   // Добавляем контейнер в DOM
   document.getElementById('OrdersList').appendChild(container);
@@ -856,7 +857,7 @@ function createContainerForBox(article, items, a) {
   document.getElementById('countBoxNumber').textContent = boxcountInPanel
 
   const loadingScreen = document.getElementById('loading-screen');
-  loadingScreen.style.transition= '1s';
+  loadingScreen.style.transition = '1s';
   loadingScreen.style.opacity = 0;
 
   setTimeout(() => {
@@ -866,11 +867,11 @@ function createContainerForBox(article, items, a) {
   document.querySelectorAll('.mainbox').forEach(listItem => {
     // Проверяем наличие уже добавленных обработчиков
     if (!listItem.hasDragOverHandler) {
-        listItem.addEventListener('dragstart', handleDragStart);
-        listItem.addEventListener('dragend', handleDragEnd);  
-        listItem.addEventListener('dragover', dragOverHandler);
-        listItem.addEventListener('drop', drop);
-        listItem.hasDragOverHandler = true; // Устанавливаем флаг
+      listItem.addEventListener('dragstart', handleDragStart);
+      listItem.addEventListener('dragend', handleDragEnd);
+      listItem.addEventListener('dragover', dragOverHandler);
+      listItem.addEventListener('drop', drop);
+      listItem.hasDragOverHandler = true; // Устанавливаем флаг
     }
   });
   let y = 0
@@ -898,12 +899,12 @@ function createContainerForBox(article, items, a) {
 
   setTimeout(() => {
     container.style.opacity = 1;
-    container.style.height = '100%';  
+    container.style.height = '100%';
   }, 1000);
 }
 
 function changeItemsforDelivery() {
-  if (statusProgram.changeMod == 'no'){
+  if (statusProgram.changeMod == 'no') {
     statusProgram.changeMod = 'yes'
     document.querySelectorAll('.deleteBox').forEach(Deletebutton => {
       Deletebutton.style.display = 'flex'
@@ -914,7 +915,7 @@ function changeItemsforDelivery() {
       if (pArticle) {
         pArticle.setAttribute('contenteditable', 'true');
       }
-    })  
+    })
   }
 
   else {
@@ -928,6 +929,6 @@ function changeItemsforDelivery() {
       if (pArticle) {
         pArticle.setAttribute('contenteditable', 'false');
       }
-    })  
+    })
   }
 }
