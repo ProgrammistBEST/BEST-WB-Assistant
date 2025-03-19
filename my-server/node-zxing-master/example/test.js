@@ -20,7 +20,7 @@ let db = new sqlite3.Database('./database/honestsigndb.db', (err) => {
 
 function startQRdecoder(brandData) {
   console.log(brandData)
-  if (brandData == 'BestShoes') {
+  if (brandData == 'Bestshoes') {
     cropBox = { x: 85, y: 35, width: 80, height: 80 };
     cropOptions = { left: 400, top: 50, width: 600, height: 480 };
   } else if (brandData == 'Armbest') {
@@ -104,7 +104,7 @@ function takeInfoToLine(row2, index, brandData) {
           // Crop each page
           const pages = pdfDoc.getPages();
           pages.forEach((page) => {
-            if (brandData == 'BestShoes') {
+            if (brandData == 'Bestshoes') {
               // page.setCropBox(x, y, width, height);
               page.drawRectangle({
                 x: 0,

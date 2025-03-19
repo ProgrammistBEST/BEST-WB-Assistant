@@ -578,7 +578,7 @@ function buttonforCounterBoxAndItems() {
             boxescountInPanelBEST26++;
 
         }
-        else if (box.classList.contains('BestShoes')) {
+        else if (box.classList.contains('Bestshoes')) {
             PreNumberBox = '3'
             if (date < 10) {
                 date = '0' + date;
@@ -603,7 +603,7 @@ function buttonforCounterBoxAndItems() {
             else if (box.classList.contains('Best26') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST26++
             }
-            else if (box.classList.contains('BestShoes') && box.classList.contains(statusProgram.NameDelivery)) {
+            else if (box.classList.contains('Bestshoes') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST++
             }
             if (!acc[article]) {
@@ -633,7 +633,7 @@ function buttonforCounterBoxAndItems() {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST26
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST26
     }
-    else if (statusProgram.brand == 'BestShoes') {
+    else if (statusProgram.brand == 'Bestshoes') {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST
     }

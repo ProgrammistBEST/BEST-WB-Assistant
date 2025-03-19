@@ -2,7 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 
 // Путь к вашему JSON файлу
-const jsonFilePath = '../json/BestShoes.json';
+const jsonFilePath = '../json/Bestshoes.json';
 
 // Функция для чтения JSON файла
 function readJsonFile(filePath) {
@@ -21,7 +21,7 @@ function readJsonFile(filePath) {
 function createTable(db) {
     return new Promise((resolve, reject) => {
         db.run(`
-            CREATE TABLE IF NOT EXISTS product_sizesBestShoes (
+            CREATE TABLE IF NOT EXISTS product_sizesBestshoes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 vendor_code TEXT,
                 nm_id INTEGER,
@@ -46,7 +46,7 @@ function createTable(db) {
 function insertData(db, data) {
     return new Promise((resolve, reject) => {
         const stmt = db.prepare(`
-            INSERT INTO product_sizesBestShoes (vendor_code, nm_id, size_key, chrt_id, tech_size, wb_size, skus, brand)
+            INSERT INTO product_sizesBestshoes (vendor_code, nm_id, size_key, chrt_id, tech_size, wb_size, skus, brand)
             VALUES (?, ?, ?, ?, ?, ?, ?,?)
         `);
 
@@ -83,7 +83,7 @@ async function main() {
         const data = await readJsonFile(jsonFilePath);
 
         // Подключение к базе данных SQLite
-        const db = new sqlite3.Database('productsBestShoes.db');
+        const db = new sqlite3.Database('productsBestshoes.db');
 
         // Создание таблицы
         await createTable(db);

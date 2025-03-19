@@ -189,7 +189,7 @@ document.getElementById('UniqButtonAddNewKYZ').addEventListener('click', async f
         return;
     }
 
-    if (statusProgram.brand !== 'Armbest' && statusProgram.brand !== 'Best26' && statusProgram.brand !== 'BestShoes') {
+    if (statusProgram.brand !== 'Armbest' && statusProgram.brand !== 'Best26' && statusProgram.brand !== 'Bestshoes') {
         alert('Недопустимый бренд.');
         return;
     }
