@@ -84,13 +84,13 @@ let dbKYZ = new sqlite3.Database('./database/honestsigndb.db', (err) => {
     }
 });
 
-// const saveDataAboutDelivery = new sqlite3.Database('./database/SaveDataAboutDelivery.db', sqlite3.OPEN_READWRITE, (err) => {
-//     if (err) {
-//         console.error('Ошибка при открытии базы данных', err.message);
-//     } else {
-//         console.log(' Успешное подключение к SaveDataAboutDelivery');
-//     }
-// });
+const saveDataAboutDelivery = new sqlite3.Database('./database/SaveDataAboutDelivery.db', sqlite3.OPEN_READWRITE, (err) => {
+    if (err) {
+        console.error('Ошибка при открытии базы данных', err.message);
+    } else {
+        console.log(' Успешное подключение к SaveDataAboutDelivery');
+    }
+});
 
 // Middleware для обработки JSON
 app.use(bodyParser.json());
@@ -457,8 +457,8 @@ app.get('/getModelBest26', (req, res) => {
         }
     });
 });
-app.get('/getModelBestshoes', (req, res) => {
-    const sql = 'SELECT * FROM product_sizesBestshoes'; // Выборка всех записей из таблицы
+app.get('/getModelBestShoes', (req, res) => {
+    const sql = 'SELECT * FROM product_sizesBestShoes'; // Выборка всех записей из таблицы
     // Выполнение SQL запроса к базе данных
     db.all(sql, [], (err, rows) => {
         if (err) {
@@ -589,8 +589,8 @@ app.get('/getWbSizeBest26', async (req, res) => {
     }
 });
 
-// Получить размер для Bestshoes
-app.get('/getWbSizeBestshoes', async (req, res) => {
+// Получить размер для BestShoes
+app.get('/getWbSizeBestShoes', async (req, res) => {
     const skus = req.query.skus;
 
     // Проверяем, что SKU передан в запросе
@@ -602,7 +602,7 @@ app.get('/getWbSizeBestshoes', async (req, res) => {
         // Выполняем запрос к базе данных
         const [rows] = await pool.execute(
             'SELECT size FROM products WHERE company_name = ? AND sku = ?',
-            ['Bestshoes', skus]
+            ['BestShoes', skus]
         );
 
         // Если размер найден, формируем ответ
@@ -614,7 +614,7 @@ app.get('/getWbSizeBestshoes', async (req, res) => {
         // Если размер не найден
         res.status(404).send('Размер не найден');
     } catch (error) {
-        console.error(`Ошибка при выполнении запроса для Bestshoes SKU ${skus}:`, error.message);
+        console.error(`Ошибка при выполнении запроса для BestShoes SKU ${skus}:`, error.message);
         res.status(500).send('Ошибка сервера');
     }
 });
@@ -663,7 +663,7 @@ app.get('/report_hs', async (req, res) => {
         const reportRows = await querySQLite(dbKYZ, reportQuery, [normalizedBrand]);
         console.log("reportMrows:", reportRows)
         // Создаем карту для быстрого доступа к данным из таблицы lines
-        const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity_Waiting+row.Quantity_Comeback]));
+        const reportMap = new Map(reportRows.map(row => [`${row.Model}_${row.Size}`, row.Quantity_Waiting + row.Quantity_Comeback]));
         console.log("reportMap", reportMap)
         // Запрос к таблице products (MySQL)
         const [modelsRows] = await pool.execute(
@@ -684,8 +684,8 @@ app.get('/report_hs', async (req, res) => {
         const available = [];
         const shortage = [];
 
-        if (brand === 'Armbest' || brand === 'Bestshoes') {
-            // Для Armbest и Bestshoes берем только уникальные размеры
+        if (brand === 'Armbest' || brand === 'BestShoes') {
+            // Для Armbest и BestShoes берем только уникальные размеры
             console.log(brand)
             const uniqueSizes = [...new Set(modelsRows.map(row => row.Size))];
             uniqueSizes.forEach(size => {

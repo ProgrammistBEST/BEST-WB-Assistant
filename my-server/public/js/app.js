@@ -16,8 +16,8 @@ let statusProgramLoadApp = JSON.parse(statusProgramApp);
     console.log('statusProgramLoadApp ', statusProgramLoadApp)
     if (statusProgramLoadApp.brand == 'Armbest') {
       token = await getApiById(3, 'Armbest', 'WB');
-    } else if (statusProgramLoadApp.brand == 'Bestshoes') {
-      token = await getApiById(6, 'Bestshoes', 'WB');
+    } else if (statusProgramLoadApp.brand == 'BestShoes') {
+      token = await getApiById(6, 'BestShoes', 'WB');
     } else if (statusProgramLoadApp.brand == 'Best26') {
       token = await getApiById(9, 'Best26', 'WB');
     }

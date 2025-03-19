@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
         navbarBrandElement.classList.add('brand-2');
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTY5MSwiaWQiOiIwMTkzM2U5My1jM2YwLTdkYTQtYTc1My02ODBkYmY0MmY4NTMiLCJpaWQiOjEyMjc2MDYzMywib2lkIjoxMzU5OTM5LCJzIjoyNDYsInNpZCI6IjYwODk0YzU1LWNmOWItNGVhNS04YzMzLTY2NTRkMmQ3OGFkNCIsInQiOmZhbHNlLCJ1aWQiOjEyMjc2MDYzM30.4oucmBwKLfMs_9coKkcxp1ogCAAJgVfWyhxRSasOj2D_exzowJJ6b8jq57OTaApujKLxYJhSHpoMqVld6iCauw'
     }
-    else if (statusProgram.brand == 'Bestshoes') {
+    else if (statusProgram.brand == 'BestShoes') {
         navbarBrandElement.classList.add('brand-3');
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTYyNiwiaWQiOiIwMTkzM2U5Mi1jNjM3LTc3Y2YtODhjYy02MTg1OGViY2E2OWEiLCJpaWQiOjUxODk0ODAyLCJvaWQiOjE5MDEzNSwicyI6MjQ2LCJzaWQiOiIzYjIzZGM5Zi1iYzgxLTRmMWUtOGNhMi02ODZjMzA2NjJjMDMiLCJ0IjpmYWxzZSwidWlkIjo1MTg5NDgwMn0.y87P-oDaqk1jgxqeUwc12F0HXIdFDd6PHBSFcNntUKcbeHDiumMgf5dOokZdnM-GXvO8B1cEQhffo8T1bxP17Q'
     }
@@ -54,7 +54,7 @@ function chooseBrend(selectedbrand) {
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTY5MSwiaWQiOiIwMTkzM2U5My1jM2YwLTdkYTQtYTc1My02ODBkYmY0MmY4NTMiLCJpaWQiOjEyMjc2MDYzMywib2lkIjoxMzU5OTM5LCJzIjoyNDYsInNpZCI6IjYwODk0YzU1LWNmOWItNGVhNS04YzMzLTY2NTRkMmQ3OGFkNCIsInQiOmZhbHNlLCJ1aWQiOjEyMjc2MDYzM30.4oucmBwKLfMs_9coKkcxp1ogCAAJgVfWyhxRSasOj2D_exzowJJ6b8jq57OTaApujKLxYJhSHpoMqVld6iCauw'
     }
 
-    else if (statusProgram.brand == 'Bestshoes') {
+    else if (statusProgram.brand == 'BestShoes') {
         navbarBrandElement.classList.add('brand-3');
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTYyNiwiaWQiOiIwMTkzM2U5Mi1jNjM3LTc3Y2YtODhjYy02MTg1OGViY2E2OWEiLCJpaWQiOjUxODk0ODAyLCJvaWQiOjE5MDEzNSwicyI6MjQ2LCJzaWQiOiIzYjIzZGM5Zi1iYzgxLTRmMWUtOGNhMi02ODZjMzA2NjJjMDMiLCJ0IjpmYWxzZSwidWlkIjo1MTg5NDgwMn0.y87P-oDaqk1jgxqeUwc12F0HXIdFDd6PHBSFcNntUKcbeHDiumMgf5dOokZdnM-GXvO8B1cEQhffo8T1bxP17Q'
     }

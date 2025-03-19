@@ -455,7 +455,7 @@ async function finishDocument(choosedVariant) {
             if (fileBrand == 'Best26') {
                 url = `/download?fileBrand=${encodeURIComponent('EVA')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
-            else if (fileBrand == 'Bestshoes') {
+            else if (fileBrand == 'BestShoes') {
                 url = `/download?fileBrand=${encodeURIComponent('BEST')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
             else if (fileBrand == 'Armbest') {
@@ -538,7 +538,7 @@ async function finishDocument(choosedVariant) {
                     imgKYZ.src = imageUrl;
                     canvas.remove()
                     doc.addImage(imagesKYZPDF, 'JPEG', 0, 0, 58, 40, null, 'FAST');
-                    if (statusProgramLoadPrintPDFDOC.brand == 'Bestshoes') {
+                    if (statusProgramLoadPrintPDFDOC.brand == 'BestShoes') {
                         doc.setFillColor(255, 255, 255);
                         doc.rect(2, 2, 28, 25, 'F');
                         if (article.length > 7) {

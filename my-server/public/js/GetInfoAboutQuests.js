@@ -15,8 +15,8 @@ const navbarBrandElement = document.querySelector('.navbar-brand');
             token = await getApiById(3, 'Armbest', 'WB');
         } else if (statusProgramLoadApp.brand === 'Best26') {
             token = await getApiById(9, 'Best26', 'WB');
-        } else if (statusProgramLoadApp.brand === 'Bestshoes') {
-            token = await getApiById(6, 'Bestshoes', 'WB');
+        } else if (statusProgramLoadApp.brand === 'BestShoes') {
+            token = await getApiById(6, 'BestShoes', 'WB');
         }
     } catch (error) {
         console.error('Ошибка при обработке токена:', error.message);

@@ -188,7 +188,7 @@ nav {
     content: "Best26";
 }
 .brand-3::after {
-    content: "Bestshoes";
+    content: "BestShoes";
 }
 .bpxelem {
     user-select: none; /* Запрещает выделение текста внутри элемента */
