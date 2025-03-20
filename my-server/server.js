@@ -7,10 +7,16 @@ const cors = require('cors');
 const port = 3000;
 const portSocket = 3002;
 const fs = require('fs');
-const os = require('os');
 const multer = require('multer');
 const { processPDF } = require('./pdfProcessor.js');
 const mysql = require('mysql2/promise');
+const NodeCache = require("node-cache");
+const cache = new NodeCache({ stdTTL: 60 }); // Кэш с временем жизни 60 секунд
+
+// Для работы с сокетами
+const http = require('http');
+const socketIo = require('socket.io');
+const server = http.createServer();
 
 const dbApi = mysql.createPool({
     host: '192.168.100.170',
@@ -20,11 +26,18 @@ const dbApi = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
 });
+// Настройки подключения к базе данных
+const dbConfig = {
+    host: '192.168.100.170',
+    user: 'root',
+    password: 'root',
+    database: 'test',
+    waitForConnections: true,
+    connectionLimit: 10,
+};
 
-// Для работы с сокетами
-const http = require('http');
-const socketIo = require('socket.io');
-const server = http.createServer();
+// Создаем пул соединений с базой данных
+const pool = mysql.createPool(dbConfig);
 
 const io = socketIo(server, {
     cors: {
@@ -237,49 +250,38 @@ app.get('/kyzSizes', (req, res) => {
 });
 
 app.get('/kyz', (req, res) => {
-    const size = req.query.Size;
-    const brand = req.query.brand;
-    const model = req.query.Model;
-    console.log(req.query)
-    if (size && brand && model) {
-        // Запрос для статуса 'Comeback'
-        const comebackPromise = new Promise((resolve, reject) => {
-            dbKYZ.all('SELECT line, Model, Size, fullline FROM lines WHERE Size = ? AND brand = ? AND Status = "Comeback" AND Model = ?', [size, brand, model], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    console.log(rows)
+    const { Size: size, brand, Model: model } = req.query;
 
-                    resolve(rows);
-                }
-            });
-        });
-
-        // Запрос для статуса 'Waiting'
-        const waitingPromise = new Promise((resolve, reject) => {
-            dbKYZ.all('SELECT line, Model, Size, fullline FROM lines WHERE Size = ? AND brand = ? AND Status = "Waiting" AND Model = ?', [size, brand, model], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    console.log(rows)
-                    resolve(rows);
-                }
-            });
-        });
-
-        // Выполняем оба запроса параллельно
-        Promise.all([comebackPromise, waitingPromise])
-            .then(results => {
-                const [comebackRows, waitingRows] = results;
-                const allRows = [...comebackRows, ...waitingRows];
-                res.json({ data: allRows });
-            })
-            .catch(err => {
-                res.status(500).json({ error: err.message });
-            });
-    } else {
-        res.status(400).json({ error: 'Size and brand and model parameters are required' });
+    if (!size || !brand || !model) {
+        return res.status(400).json({ error: 'Size, brand, and model parameters are required' });
     }
+
+    // Создаем уникальный ключ для кэша
+    const cacheKey = `kyz:${size}:${brand}:${model}`;
+
+    // Проверяем, есть ли данные в кэше
+    const cachedData = cache.get(cacheKey);
+    if (cachedData) {
+        return res.json({ data: cachedData });
+    }
+
+    // Один SQL-запрос вместо двух
+    const query = `
+        SELECT line, Model, Size, fullline 
+        FROM lines 
+        WHERE Size = ? AND brand = ? AND Model = ? AND Status IN ("Comeback", "Waiting")
+    `;
+
+    dbKYZ.all(query, [size, brand, model], (err, rows) => {
+        if (err) {
+            console.error('Database error:', err.message);
+            return res.status(500).json({ error: 'Database query failed' });
+        }
+
+        // Сохраняем данные в кэш
+        cache.set(cacheKey, rows);
+        res.json({ data: rows });
+    });
 });
 
 app.post('/kyzComeback', (req, res) => {
@@ -432,44 +434,6 @@ const transferAndDeleteOldRecords = () => {
 };
 transferAndDeleteOldRecords();
 
-// Обработчик GET запроса на получение данных о моделях из разных таблиц
-app.get('/getModelArmbest', (req, res) => {
-    const sql = 'SELECT * FROM product_sizesArmbest'; // Выборка всех записей из таблицы
-    // Выполнение SQL запроса к базе данных
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка выполнения SQL запроса', err.message);
-            res.status(500).send('Ошибка выполнения запроса к базе данных');
-        } else {
-            res.json(rows); // Отправляем данные в формате JSON клиенту
-        }
-    });
-});
-app.get('/getModelBest26', (req, res) => {
-    const sql = 'SELECT * FROM product_sizesBest26'; // Выборка всех записей из таблицы
-    // Выполнение SQL запроса к базе данных
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка выполнения SQL запроса', err.message);
-            res.status(500).send('Ошибка выполнения запроса к базе данных');
-        } else {
-            res.json(rows); // Отправляем данные в формате JSON клиенту
-        }
-    });
-});
-app.get('/getModelBestshoes', (req, res) => {
-    const sql = 'SELECT * FROM product_sizesBestshoes'; // Выборка всех записей из таблицы
-    // Выполнение SQL запроса к базе данных
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error('Ошибка выполнения SQL запроса', err.message);
-            res.status(500).send('Ошибка выполнения запроса к базе данных');
-        } else {
-            res.json(rows); // Отправляем данные в формате JSON клиенту
-        }
-    });
-});
-
 // Обслуживание статических файлов! 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -520,16 +484,45 @@ app.post('/add-element', (req, res) => {
         res.json({ success: true, message: 'Element added successfully' });
     });
 });
-// Настройки подключения к базе данных
-const dbConfig = {
-    host: '192.168.100.170',
-    user: 'root',
-    password: 'root',
-    database: 'test',
-};
 
-// Создаем пул соединений с базой данных
-const pool = mysql.createPool(dbConfig);
+// Обработчик GET запроса на получение данных о моделях из разных таблиц
+app.get('/getModelArmbest', (req, res) => {
+    const sql = 'SELECT * FROM product_sizesArmbest'; // Выборка всех записей из таблицы
+    // Выполнение SQL запроса к базе данных
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Ошибка выполнения SQL запроса', err.message);
+            res.status(500).send('Ошибка выполнения запроса к базе данных');
+        } else {
+            res.json(rows); // Отправляем данные в формате JSON клиенту
+        }
+    });
+});
+app.get('/getModelBest26', (req, res) => {
+    const sql = 'SELECT * FROM product_sizesBest26'; // Выборка всех записей из таблицы
+    // Выполнение SQL запроса к базе данных
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Ошибка выполнения SQL запроса', err.message);
+            res.status(500).send('Ошибка выполнения запроса к базе данных');
+        } else {
+            res.json(rows); // Отправляем данные в формате JSON клиенту
+        }
+    });
+});
+app.get('/getModelBestshoes', (req, res) => {
+    const sql = 'SELECT * FROM product_sizesBestshoes'; // Выборка всех записей из таблицы
+    // Выполнение SQL запроса к базе данных
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error('Ошибка выполнения SQL запроса', err.message);
+            res.status(500).send('Ошибка выполнения запроса к базе данных');
+        } else {
+            res.json(rows); // Отправляем данные в формате JSON клиенту
+        }
+    });
+});
+
 // Получить размер
 app.get('/getWbSizeArmbest', async (req, res) => {
     const skus = req.query.skus;
@@ -650,7 +643,6 @@ app.get('/report_hs', async (req, res) => {
         // Нормализация имени бренда (нижний регистр)
         const normalizedBrand = brand.trim().toLowerCase();
 
-        // Запрос для получения данных из таблицы lines (SQLite)
         // Запрос для получения данных из таблицы lines (SQLite)
         const reportQuery = `
             SELECT Model, Size, 
