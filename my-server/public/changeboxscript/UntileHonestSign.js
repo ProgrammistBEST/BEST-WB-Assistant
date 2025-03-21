@@ -153,103 +153,138 @@ const socket = io(`http://${window.location.hostname}:3002`);
 
 // Элементы DOM
 const modalOverlay = document.getElementById('modal-overlay');
-const progressFill = document.getElementById('progress-fill');
+const progressFillPdf = document.getElementById('progress-fill-pdf');
+const progressFillQr = document.getElementById('progress-fill-qr');
 const modalMessage = document.getElementById('modal-message');
 const closeModalBtn = document.getElementById('close-modal-btn');
 
+// Проверка наличия элементов DOM
+if (!modalOverlay || !progressFillPdf || !progressFillQr || !modalMessage || !closeModalBtn) {
+  console.error('Ошибка: Один или несколько элементов DOM не найдены.');
+}
+
 // Функция для отображения модального окна
 function ShowModalDownlads(status) {
-    modalMessage.textContent = status.message || 'Загрузка...';
-    progressFill.style.width = `${status.progress}%`;
-    modalOverlay.classList.add('active');
+  if (!modalMessage || !progressFillPdf || !progressFillQr) {
+    console.error('Ошибка: Элементы modalMessage, progressFillPdf или progressFillQr не найдены.');
+    return;
+  }
+
+  modalMessage.textContent = status.message || 'Загрузка...';
+
+  // Обновляем прогресс для PDF или QR
+  if (status.progress <= 50) {
+    progressFillPdf.style.width = `${status.progress * 2}%`;
+    progressFillQr.style.width = '0%';
+  } else {
+    progressFillPdf.style.width = '100%';
+    progressFillQr.style.width = `${(status.progress - 50) * 2}%`;
+  }
+
+  modalOverlay.classList.add('active');
 }
 
 // Функция для скрытия модального окна
 function hideModal() {
+  if (modalOverlay) {
     modalOverlay.classList.remove('active');
+  }
 }
 
 // Обработчик закрытия модального окна
-closeModalBtn.addEventListener('click', hideModal);
+if (closeModalBtn) {
+  closeModalBtn.addEventListener('click', () => {
+    const confirmClose = confirm('Вы уверены, что хотите прекратить загрузку? Все данные будут удалены.');
+    if (confirmClose) {
+      hideModal();
+      socket.emit('cancel_upload'); // Уведомляем сервер о прекращении загрузки
+    }
+  });
+}
 
 // Обработка события от сервера
 socket.on('upload_status', ({ progress, message }) => {
-    console.log('Upload Status:', message);
-    const status = { progress, message };
-    ShowModalDownlads(status);
+  console.log('Upload Status:', message);
+  const status = { progress, message };
+  ShowModalDownlads(status);
 });
 
 // Обработчик клика на кнопку "Сохранить"
 document.getElementById('UniqButtonAddNewKYZ').addEventListener('click', async function () {
-    const fileInput = document.getElementById('file-input');
-    const file = fileInput.files[0];
+  const fileInput = document.getElementById('file-input');
+  const file = fileInput.files[0];
 
-    if (!file) {
-        alert('Пожалуйста, выберите файл.');
-        return;
-    }
+  if (!file) {
+    alert('Пожалуйста, выберите файл.');
+    return;
+  }
 
-    if (statusProgram.brand !== 'Armbest' && statusProgram.brand !== 'Best26' && statusProgram.brand !== 'Bestshoes') {
-        alert('Недопустимый бренд.');
-        return;
-    }
+  if (statusProgram.brand !== 'Armbest' && statusProgram.brand !== 'Best26' && statusProgram.brand !== 'Bestshoes') {
+    alert('Недопустимый бренд.');
+    return;
+  }
 
-    let userConfirmed = confirm(`Вы уверены, что хотите добавить новые KYZ для "${statusProgram.brand}"`);
-    if (!userConfirmed) {
-        return;
-    }
+  const userConfirmed = confirm(`Вы уверены, что хотите добавить новые KYZ для "${statusProgram.brand}"`);
+  if (!userConfirmed) {
+    return;
+  }
 
-    // Показываем модальное окно перед отправкой файла
-    ShowModalDownlads({ progress: 0, message: 'Начинается загрузка...' });
+  // Показываем модальное окно перед отправкой файла
+  ShowModalDownlads({ progress: 0, message: 'Начинается загрузка...' });
 
-    if (file) {
-        const formData = new FormData();
-        formData.append('pdf', file);
-        formData.append('brandData', JSON.stringify(statusProgram.brand)); // Добавляем данные из progStatus.brand
+  if (file) {
+    const formData = new FormData();
+    formData.append('pdf', file);
+    formData.append('brandData', JSON.stringify(statusProgram.brand)); // Добавляем данные из progStatus.brand
 
-        try {
-            const response = await fetch('/uploadNewKyz', {
-                method: 'POST',
-                body: formData,
-            });
+    try {
+      const response = await fetch('/uploadNewKyz', {
+        method: 'POST',
+        body: formData,
+      });
 
-            if (response.ok) {
-                const result = await response.json();
+      if (response.ok) {
+        const result = await response.json();
 
-                // Обновляем прогресс загрузки через сокет
-                socket.emit('upload_start'); // Уведомляем сервер о начале загрузки
+        // Обновляем прогресс загрузки через сокет
+        socket.emit('upload_start'); // Уведомляем сервер о начале загрузки
 
-                // После успешной загрузки скрываем модальное окно
-                setTimeout(() => {
-                    showModal({ progress: 100, message: 'Загрузка завершена!' });
-                    setTimeout(hideModal, 2000); // Скрываем модальное окно через 2 секунды
-                }, 1000);
+        // После успешной загрузки скрываем модальное окно
+        setTimeout(() => {
+          ShowModalDownlads({ progress: 100, message: 'Загрузка завершена!' });
+          setTimeout(hideModal, 2000); // Скрываем модальное окно через 2 секунды
+        }, 1000);
 
-                // Отображаем сообщение об успехе
-                document.querySelector('body').style.overflow = 'hidden';
-                document.getElementById('success-message').style.display = 'flex';
-                let messageText = document.querySelector('.text-message');
-                messageText.textContent = 'Данные успешно добавлены!';
-                setTimeout(() => {
-                    document.getElementById('success-message').style.opacity = 1;
-                    setTimeout(() => {
-                        document.querySelector('.message').style.transform = "translate(220px)";
-                        document.getElementById('success-message').style.opacity = 0;
-                        setTimeout(() => {
-                            document.getElementById('success-message').style.display = 'none';
-                            document.querySelector('.message').style.transform = "translate(0px)";
-                            document.querySelector('body').style.overflow = '';
-                        }, 1000);
-                    }, 4000);
-                }, 200);
-            } else {
-                alert('Ошибка при загрузке файла.');
-                hideModal(); // Скрываем модальное окно при ошибке
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            alert('Ошибка при загрузке файла.');
-            hideModal(); // Скрываем модальное окно при ошибке
+        // Отображаем сообщение об успехе
+        document.querySelector('body').style.overflow = 'hidden';
+        const successMessage = document.getElementById('success-message');
+        if (successMessage) {
+          successMessage.style.display = 'flex';
+          const messageText = document.querySelector('.text-message');
+          if (messageText) {
+            messageText.textContent = 'Данные успешно добавлены!';
+          }
+          setTimeout(() => {
+            successMessage.style.opacity = 1;
+            setTimeout(() => {
+              document.querySelector('.message').style.transform = 'translate(220px)';
+              successMessage.style.opacity = 0;
+              setTimeout(() => {
+                successMessage.style.display = 'none';
+                document.querySelector('.message').style.transform = 'translate(0px)';
+                document.querySelector('body').style.overflow = '';
+              }, 1000);
+            }, 4000);
+          }, 200);
         }
+      } else {
+        alert('Ошибка при загрузке файла.');
+        hideModal(); // Скрываем модальное окно при ошибке
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Ошибка при загрузке файла.');
+      hideModal(); // Скрываем модальное окно при ошибке
     }
+  }
 });

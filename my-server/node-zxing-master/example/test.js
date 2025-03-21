@@ -1,257 +1,214 @@
+// Замените require на динамический import
+async function loadPLimit() {
+  const pLimit = await import('p-limit');
+  return pLimit.default; // Используйте .default для доступа к экспорту по умолчанию
+}
+
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 const pdfPoppler = require('pdf-poppler');
 const qrdecoder = require('..')();
 const { PDFDocument, rgb } = require('pdf-lib');
-const sql = `SELECT line, data FROM lines WHERE line = ?`;
-const sqlALL = `SELECT line, data, brand, fullline FROM lines WHERE brand = ?`;
-const sqlUpdate = `UPDATE lines SET fullline = ? WHERE line = ?`;
 const sharp = require('sharp');
 
-let cropOptions = {};
+const SQL_SELECT_LINES_BY_BRAND = `
+  SELECT line, data, brand, fullline 
+  FROM lines 
+  WHERE brand = ? AND (fullline IS NULL OR LENGTH(fullline) < 5 OR line = '')
+`;
+const SQL_UPDATE_FULLLINE = `UPDATE lines SET fullline = ? WHERE line = ?`;
+
 let db = new sqlite3.Database('./database/honestsigndb.db', (err) => {
   if (err) {
     console.error('Could not connect to database', err);
   } else {
-    console.log(' Успешное подключение honestsigndb QRrecorder');
+    console.log('Успешное подключение honestsigndb для декодирования');
   }
 });
 
-function startQRdecoder(brandData) {
-  console.log(brandData)
-  if (brandData == 'Bestshoes') {
-    cropBox = { x: 85, y: 35, width: 80, height: 80 };
-    cropOptions = { left: 400, top: 50, width: 600, height: 480 };
-  } else if (brandData == 'Armbest') {
-    cropBox = { x: 50, y: 0, width: 80, height: 80 };
-    cropOptions = { left: 50, top: 0, width: 500, height: 450 };
-  } else if (brandData == 'Best26') {
-    cropBox = { x: 50, y: 0, width: 80, height: 80 };
-    cropOptions = { left: 50, top: 0, width: 500, height: 450 };
-  }
+// Функция для получения параметров обрезки в зависимости от бренда
+function getCropOptions(brandData) {
+  const cropOptionsMap = {
+    Bestshoes: { cropBox: { x: 85, y: 35, width: 80, height: 80 }, cropArea: { left: 400, top: 50, width: 600, height: 480 } },
+    Armbest: { cropBox: { x: 50, y: 0, width: 80, height: 80 }, cropArea: { left: 50, top: 0, width: 500, height: 450 } },
+    Best26: { cropBox: { x: 50, y: 0, width: 80, height: 80 }, cropArea: { left: 50, top: 0, width: 500, height: 450 } },
+  };
 
-  db.all(sqlALL, [brandData], (err, rows) => {
-    let arrayForKyzwihoutFullKyz = []
-    if (err) {
-      console.error(err.message);
-      return;
-    }
-    rows.forEach((row, index) => {
-      if (row.fullline == null || row.fullline.length < 5 || row.line == "") {
-        arrayForKyzwihoutFullKyz.push(row)
-      }
-    });
-    console.log(arrayForKyzwihoutFullKyz.length)
-    arrayForKyzwihoutFullKyz.forEach((row, index) => {
-      setTimeout(() => {
-        try {
-          takeInfoToLine(row, index, brandData); // Проверяем, вызывается ли функция
-        } catch (error) {
-          console.error('Ошибка в функции takeInfoToLine:', error);
-        }
-      }, index * 200); // Умножаем время задержки на индекс    
-    })
-  })
+  return cropOptionsMap[brandData] || {};
 }
 
-const convertPdfToPng = (outputPath, line) => {
+// Функция для поиска строк без полного QR-кода
+async function findLinesWithoutFullQR(brandData) {
+  return new Promise((resolve, reject) => {
+    db.all(SQL_SELECT_LINES_BY_BRAND, [brandData], (err, rows) => {
+      if (err) {
+        console.error(err.message);
+        return reject(err);
+      }
+      resolve(rows);
+    });
+  });
+}
+
+// Функция для обрезки страниц PDF
+async function cropPDFPages(pdfBytes, brandData) {
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+
+  const pages = pdfDoc.getPages();
+  pages.forEach((page) => {
+    if (brandData === 'Bestshoes') {
+      drawWhiteRectangles(page, { x: 0, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
+    } else {
+      drawWhiteRectangles(page, { x: 85, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
+    }
+  });
+
+  return pdfDoc.save();
+}
+
+// Функция для рисования белых прямоугольников на странице
+function drawWhiteRectangles(page, rect1, rect2) {
+  page.drawRectangle({ ...rect1, color: rgb(1, 1, 1), borderWidth: 0 });
+  page.drawRectangle({ ...rect2, color: rgb(1, 1, 1), borderWidth: 0 });
+}
+
+// Функция для конвертации PDF в PNG
+async function convertPDFToPNG(pdfBytes) {
+  const tempPdfPath = path.join(__dirname, 'mamka', `temp_${Date.now()}.pdf`);
   const options = {
     format: "png",
     out_dir: path.join(__dirname, 'papka'),
-    out_prefix: path.basename(outputPath, path.extname(outputPath)),
-    page: 1
+    out_prefix: `temp_${Date.now()}`,
+    page: 1,
   };
+
   try {
-    pdfPoppler.convert(outputPath, options)
-      .then(result => {
-        const pngContent = findPngFileInPapka(outputPath);
-        const fileFolder = path.basename(pngContent);
-        const finalDeletePathPDFMainFolder = outputPath
+    // Записываем PDF в файл
+    await fs.promises.writeFile(tempPdfPath, pdfBytes);
 
-        if (pngContent) {
-          cropPng(pngContent, fileFolder, cropOptions, line, finalDeletePathPDFMainFolder)
-        }
-      })
-      .catch(error => {
-        console.error('Ошибка конвертации:', error);
-      });
+    // Конвертируем PDF в PNG
+    await pdfPoppler.convert(tempPdfPath, options);
+
+    // Получаем путь к PNG файлу
+    const pngFilePath = path.join(options.out_dir, `${options.out_prefix}-1.png`);
+
+    return pngFilePath;
   } catch (error) {
-    console.error("Error converting PDF to PNG:", error);
+    console.error('Ошибка конвертации PDF в PNG:', error);
+    throw error;
+  } finally {
+    // Удаляем временный PDF файл, если он существует
+    if (fs.existsSync(tempPdfPath)) {
+      try {
+        await fs.promises.unlink(tempPdfPath); // Используем асинхронное удаление
+      } catch (unlinkError) {
+        console.warn(`Не удалось удалить временный PDF файл: ${tempPdfPath}`, unlinkError);
+      }
+    }
   }
-};
-
-function takeInfoToLine(row2, index, brandData) {
-  db.get(sql, [row2.line], (err, row) => {
-    if (err) {
-      return console.error(err.message);
-    }
-
-    line = row.line;
-    if (row) {
-      const filePath = path.join(__dirname, `${index}.pdf`);
-      const outputPath = path.join(__dirname, `${index}_cropped.pdf`);
-      // Write the PDF to a file
-      fs.writeFile(filePath, row.data, async (err) => {
-        if (err) {
-          return console.error("File write error:", err.message);
-        }
-
-        try {
-          const existingPdfBytes = fs.readFileSync(filePath);
-          const pdfDoc = await PDFDocument.load(existingPdfBytes);
-
-          // Crop each page
-          const pages = pdfDoc.getPages();
-          pages.forEach((page) => {
-            if (brandData == 'Bestshoes') {
-              // page.setCropBox(x, y, width, height);
-              page.drawRectangle({
-                x: 0,
-                y: 0, // Координата по оси Y
-                width: 80, // Ширина квадрата
-                height: 150, // Высота квадрата
-                color: rgb(1, 1, 1), // Белый цвет квадрата
-                borderWidth: 0, // Толщина рамки (если нужна рамка)
-              });
-              page.drawRectangle({
-                x: 0,
-                y: 0, // Координата по оси Y
-                width: 160, // Ширина квадрата
-                height: 36, // Высота квадрата
-                color: rgb(1, 1, 1), // Белый цвет квадрата
-                borderWidth: 0, // Толщина рамки (если нужна рамка)
-              });
-            } else {
-              // page.setCropBox(x, y, width, height);
-              page.drawRectangle({
-                x: 85,
-                y: 0, // Координата по оси Y
-                width: 80, // Ширина квадрата
-                height: 150, // Высота квадрата
-                color: rgb(1, 1, 1), // Белый цвет квадрата
-                borderWidth: 0, // Толщина рамки (если нужна рамка)
-              });
-              page.drawRectangle({
-                x: 0,
-                y: 0, // Координата по оси Y
-                width: 160, // Ширина квадрата
-                height: 36, // Высота квадрата
-                color: rgb(1, 1, 1), // Белый цвет квадрата
-                borderWidth: 0, // Толщина рамки (если нужна рамка)
-              });
-
-            }
-          });
-
-          const croppedPdfBytes = await pdfDoc.save();
-          fs.writeFile(outputPath, croppedPdfBytes, async (err) => {
-            if (err) {
-              return console.error("Error saving cropped PDF:", err.message);
-            }
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                return console.error("Error deleting original PDF:", err.message);
-              } else {
-              }
-            });
-            await convertPdfToPng(outputPath, row.line);
-          });
-        } catch (error) {
-          console.error("PDF processing error:", error.message);
-        }
-      });
-    } else {
-      console.log('No record found');
-    }
-  });
 }
 
-function decodeQrCode(pathFile, line) {
+// Функция для обрезки изображения
+async function cropImage(inputPath, cropOptions) {
+  const outputPath = inputPath.replace('.png', '_cropped.png');
+
+  try {
+    await sharp(inputPath)
+      .extract(cropOptions)
+      .toFile(outputPath);
+    return outputPath;
+  } catch (error) {
+    console.error('Ошибка при обрезке изображения:', error);
+    throw error;
+  }
+}
+
+// Функция для расшифровки QR-кода
+async function decodeQRCode(filePath) {
   return new Promise((resolve, reject) => {
-    qrdecoder.decode(pathFile, (err, out) => {
+    qrdecoder.decode(filePath, (err, result) => {
       if (err) {
-        resolve(line);
+        resolve(null);
       } else {
-        resolve(out);
+        resolve(result.replace(/\x1D/g, ''));
       }
     });
   });
 }
 
-function main_function(outputPath, line, finalDeletePathPDFMainFolder) {
-  decodeQrCode(outputPath, line)
-    .then(result => {
-      const cleanedOutput = result.replace(/\x1D/g, '');
-      const resutlQR = cleanedOutput
-      db.run(sqlUpdate, [resutlQR, line], async (err, row) => {
-        if (resutlQR.length < 10) {
-          return
-        }
-        if (err) {
-          return console.error(err.message);
-        } else {
-          fs.unlink(outputPath, (err) => {
-            if (err) {
-              return console.error("Error deleting png:", err.message);
-            } else {
-            }
-          })
-          const NewPNG = path.join(__dirname, `papka/${path.basename(outputPath, path.extname(outputPath))}.png`);
-          fs.unlink(NewPNG, (err) => {
-            if (err) {
-              return console.error("Error deleting png:", err.message);
-            } else {
-
-            }
-          })
-          const NewPDF = path.join(__dirname, `${path.basename(finalDeletePathPDFMainFolder, path.extname(finalDeletePathPDFMainFolder))}.pdf`);
-          fs.unlink(NewPDF, (err) => {
-            if (err) {
-              return console.error("Error deleting png:", err.message);
-            } else {
-            }
-          })
-        }
-      })
-    })
-    .catch(error => {
-      console.error("Error decoding QR code:", error);
+// Функция для обновления базы данных
+async function updateDatabaseWithQRCode(qrCode, line) {
+  return new Promise((resolve, reject) => {
+    db.run(SQL_UPDATE_FULLLINE, [qrCode, line], (err) => {
+      if (err) {
+        console.error(err.message);
+        return reject(err);
+      }
+      resolve();
     });
+  });
 }
 
-async function cropPng(inputPath, outputPath, cropOptions, line, finalDeletePathPDFMainFolder) {
+// Функция для очистки временных файлов
+function cleanupFiles(filePaths) {
+  filePaths.forEach(filePath => {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  });
+}
+
+// Основная функция для обработки строки данных
+async function processLine(row, brandData) {
+  const { line, data } = row;
+
   try {
-    // Обрезаем изображение по указанным параметрам
-    await sharp(inputPath)
-      .extract({
-        left: cropOptions.left,
-        top: cropOptions.top,
-        width: cropOptions.width,
-        height: cropOptions.height
-      })
-      .toFile(outputPath);
-    main_function(outputPath, line, finalDeletePathPDFMainFolder);
-  } catch (err) {
-    console.error('Ошибка при обрезке изображения:', err);
+    // Обрезка PDF
+    const croppedPdfBytes = await cropPDFPages(data, brandData);
+
+    // Конвертация PDF в PNG
+    const pngFilePath = await convertPDFToPNG(croppedPdfBytes);
+
+    // Обрезка изображения
+    const cropOptions = getCropOptions(brandData).cropArea;
+    const croppedImagePath = await cropImage(pngFilePath, cropOptions);
+
+    // Расшифровка QR-кода
+    const decodedQR = await decodeQRCode(croppedImagePath);
+
+    if (decodedQR && decodedQR.length >= 10) {
+      await updateDatabaseWithQRCode(decodedQR, line);
+    }
+
+    // Очистка временных файлов
+    cleanupFiles([pngFilePath, croppedImagePath]);
+  } catch (error) {
+    console.error(`Ошибка при обработке строки ${line}:`, error);
   }
 }
 
-function findPngFileInPapka(outputPath) {
-  let FindFilePNG = path.basename(outputPath, path.extname(outputPath)) + '-1.png'
-  const folderPath = path.join(__dirname, 'papka');
-  const files = fs.readdirSync(folderPath);
-  const pngFile = files.find(file => file == FindFilePNG);
+// В функции startQRdecoder используйте динамический импорт
+async function startQRdecoder(brandData, io) {
+  const pLimit = await loadPLimit();
+  const limit = pLimit(5); // Ограничение до 5 параллельных задач
 
-  if (!pngFile) {
-    console.log('!!!!!!!!!!PNG файл не найден!!!!!!!!!!!!!!!!!');
-    return null;
-  }
-  const filePath = path.join(folderPath, pngFile);
-  return filePath;
+  const linesWithoutFullQR = await findLinesWithoutFullQR(brandData);
+  const totalLines = linesWithoutFullQR.length;
+  let processedLines = 0;
+
+  io.emit('upload_status', { progress: 0, message: 'Начинаем обработку...' });
+
+  await Promise.all(linesWithoutFullQR.map((row, index) => 
+    limit(async () => {
+      await processLine(row, brandData);
+      processedLines++;
+      const progress = Math.round((processedLines / totalLines) * 100);
+      io.emit('upload_status', { progress, message: `Обработано ${processedLines} из ${totalLines}` });
+    })
+  ));
+
+  io.emit('upload_status', { progress: 100, message: 'Обработка завершена!' });
 }
 
-// Экспорт функции processPDF
-module.exports = {
-  startQRdecoder
-};
+module.exports = { startQRdecoder };

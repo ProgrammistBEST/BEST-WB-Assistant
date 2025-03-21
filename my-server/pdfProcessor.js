@@ -1,7 +1,5 @@
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
-
-// Импортируем библиотеки в глобальной области видимости
 const pdfjsLibPromise = import('pdfjs-dist/legacy/build/pdf.mjs');
 const pdfLib = require('pdf-lib');
 const { PDFDocument } = pdfLib;
@@ -11,136 +9,156 @@ const { startQRdecoder } = require('./node-zxing-master/example/test.js');
 async function openDatabase() {
   return open({
     filename: 'database/honestsigndb.db',
-    driver: sqlite3.Database
+    driver: sqlite3.Database,
   });
 }
 
-// Извлечение текста из PDF
-async function extractTextFromPDF(data) {
+// Извлечение текста из PDF с параллельной обработкой страниц
+async function extractTextFromPDF(fileBuffer) {
   const pdfjsLib = await pdfjsLibPromise;
   const { getDocument } = pdfjsLib;
 
-  const loadingTask = getDocument({ data });
+  const loadingTask = getDocument({ data: new Uint8Array(fileBuffer) });
   const pdf = await loadingTask.promise;
-  const extractedTexts = [];
 
+  // Параллельная обработка всех страниц
+  const pagePromises = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-    const page = await pdf.getPage(pageNumber);
-    const textContentPage = await page.getTextContent();
-    const textContent = textContentPage.items.map(item => item.str).join('\n');
-    extractedTexts.push(textContent);
+    pagePromises.push(
+      pdf.getPage(pageNumber).then(page => page.getTextContent())
+    );
   }
+
+  const textContents = await Promise.all(pagePromises);
+  const extractedTexts = textContents.map(textContent =>
+    textContent.items.map(item => item.str).join('\n')
+  );
 
   return { extractedTexts, pdf };
 }
 
 // Проверка, является ли текст числом в пределах от 24 до 48
 function isValidSize(text) {
-  let value = parseFloat(text);
-  return !isNaN(value) && (value >= 24 && value <= 48) || ['35-36', '40-41', '41-42', '46-47', '47-48'].includes(text);
-}
-
-// Сохранение всех данных в базу данных
-async function saveAllDataToDB(db, fileName, pageDataList, brandData) {
-  let brand = brandData;
-  let color;
-  let createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  let insertStmt = await db.prepare('INSERT INTO lines (brand, data, page, line, Size, created_at, model, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-
-  for (let { pageData, pageNumber, lines, sizes, Model} of pageDataList) {
-    if (Model == '' || Model == ' '){
-      Model = 'Multimodel';
-      color = 'Multicolor';
-    }
-    color = 'Multicolor';
-    let existingEntry = await db.get('SELECT 1 FROM lines WHERE line = ? AND Size = ? AND brand = ? AND Model = ? AND color = ?', [lines, sizes, brand, Model, color]);
-    if (!existingEntry) {
-      await insertStmt.run( brand, pageData, pageNumber, lines, sizes, createdAt, Model, color);
-    }
-    else {
-        console.log('Найдено совпадение!')
-    }
-  }
-  await insertStmt.finalize();
+  const value = parseFloat(text);
+  const validRanges = ['35-36', '40-41', '41-42', '46-47', '47-48'];
+  return !isNaN(value) && value >= 24 && value <= 48 || validRanges.includes(text);
 }
 
 // Создание нового PDF-документа с одной страницей
-async function createSinglePagePDF(pdfBytes, pageIndex) {
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+async function createSinglePagePDF(preloadedPdfDoc, pageIndex) {
   const newPdfDoc = await PDFDocument.create();
-  const [copiedPage] = await newPdfDoc.copyPages(pdfDoc, [pageIndex]);
+  const [copiedPage] = await newPdfDoc.copyPages(preloadedPdfDoc, [pageIndex]);
   newPdfDoc.addPage(copiedPage);
   return await newPdfDoc.save();
 }
 
-// Функция обработки PDF
+// Обработка строк текста для извлечения размеров и модели
+function parseTextForSizesAndModel(linesArray, brandData) {
+  let lines = linesArray.filter(line => line.startsWith('(01)')).join('\n');
+  let sizes = '';
+  let model = '';
+
+  if (linesArray.length > 1) {
+    const secondLine = linesArray[4] || '';
+    const thirdLine = linesArray[2] || '';
+
+    if (isValidSize(secondLine)) {
+      sizes = secondLine;
+      model = brandData === 'Best26' ? thirdLine : '';
+    } else {
+      sizes = thirdLine;
+      model = brandData === 'Best26' ? secondLine : '';
+    }
+  }
+
+  return { lines, sizes, model };
+}
+
+// Сохранение данных в базу данных пакетно
+async function saveDataToDatabase(db, fileName, pageDataList, brandData) {
+  const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+  // Подготовка данных для пакетной вставки
+  const insertValues = pageDataList.map(({ pageData, pageNumber, lines, sizes, model }) => [
+    brandData,
+    pageData,
+    pageNumber,
+    lines,
+    sizes,
+    createdAt,
+    model || 'Multimodel',
+    'Multicolor',
+  ]);
+
+  if (insertValues.length === 0) return;
+
+  // Пакетная вставка записей
+  const placeholders = insertValues.map(() => '(?,?,?,?,?,?,?,?)').join(',');
+  const flatValues = insertValues.flat();
+
+  await db.run(
+    `INSERT INTO lines (brand, data, page, line, Size, created_at, model, color) VALUES ${placeholders}`,
+    flatValues
+  );
+}
+
+// Обработка порции страниц PDF
+async function processBatchOfPages(extractedTexts, preloadedPdfDoc, startPage, pageSize, brandData) {
+  const pageDataList = await Promise.all(
+    extractedTexts.slice(startPage, startPage + pageSize).map(async (text, index) => {
+      const linesArray = text.split('\n');
+      const { lines, sizes, model } = parseTextForSizesAndModel(linesArray, brandData);
+
+      const pageBytes = await createSinglePagePDF(preloadedPdfDoc, startPage + index);
+      return {
+        pageData: pageBytes,
+        pageNumber: startPage + index + 1,
+        lines,
+        sizes,
+        model,
+      };
+    })
+  );
+
+  return pageDataList;
+}
+
+// Основная функция обработки PDF
 async function processPDF(fileBuffer, fileName, brandData, io) {
   try {
-    const data = new Uint8Array(fileBuffer);
-    const { extractedTexts, pdf } = await extractTextFromPDF(data);
-
-    // Сохранение оригинального PDF для использования с pdf-lib
-    const pdfBytes = new Uint8Array(fileBuffer);
-
+    const { extractedTexts } = await extractTextFromPDF(fileBuffer);
+    const preloadedPdfDoc = await PDFDocument.load(new Uint8Array(fileBuffer));
     const db = await openDatabase();
 
     const pageSize = 50; // Количество страниц, обрабатываемых за раз
-    let startPage = 0;
+    let currentPage = 0;
 
-    while (startPage < extractedTexts.length) {
-      
-      const progress = Math.round(((startPage + pageSize) / extractedTexts.length) * 100);
-      io.emit('upload_status', { progress, message: `Загружено ${startPage} из ${extractedTexts.length}` });
+    while (currentPage < extractedTexts.length) {
+      const progress = Math.round(((currentPage + pageSize) / extractedTexts.length) * 100);
 
-      const pageDataList = await Promise.all(extractedTexts.slice(startPage, startPage + pageSize).map(async (text, pageIndex) => {
-        const linesArray = text.split('\n');
-        let lines = linesArray.filter(line => line.startsWith('(01)')).join('\n');
-        let sizes = '';
-        let Model = '';
-        if (linesArray.length > 1 && brandData != 'Best26') {
-          const secondLine = linesArray[4] || '';
-          if (isValidSize(secondLine)) {
-            sizes = secondLine;
-            Model = ''
-          } else {
-            sizes = linesArray[2] || '';
-            Model = ''
-          }
-        } else if (linesArray.length > 1 && brandData == 'Best26') {
-          const secondLine = linesArray[4] || '';
-          const thirdLine = linesArray[2] || '';
-          if (isValidSize(secondLine)) {
-            sizes = secondLine;
-            Model = thirdLine;
-          } else {
-            sizes = linesArray[2] || '';
-            Model = thirdLine;
-          }
-        }
-        // Создаем новый PDF-документ с одной страницей
-        const pageBytes = await createSinglePagePDF(pdfBytes, startPage + pageIndex);
-        return { pageData: pageBytes, pageNumber: startPage + pageIndex + 1, lines, sizes, Model};
-      }));
+      const pageDataList = await processBatchOfPages(
+        extractedTexts,
+        preloadedPdfDoc,
+        currentPage,
+        pageSize,
+        brandData
+      );
 
-      // Записываем данные в базу данных
-      await saveAllDataToDB(db, fileName, pageDataList, brandData);
+      await saveDataToDatabase(db, fileName, pageDataList, brandData);
 
-      // Перемещаемся к следующей порции страниц
-      startPage += pageSize;
-      console.log(startPage)
+      currentPage += pageSize;
+      io.emit('upload_status', { progress, message: `Загружено ${currentPage} из ${extractedTexts.length}` });
     }
+
     await db.close();
     console.log(`PDF файл "${fileName}" успешно обработан и данные сохранены в базу данных.`);
-    startQRdecoder(brandData);
+    startQRdecoder(brandData, io);
     io.emit('upload_status', { progress: 100, message: 'Загрузка завершена!' });
-
-  } catch (err) {
-    console.error('Ошибка при обработке PDF и сохранении данных в базу данных:', err);
-    io.emit('upload_status', { progress: 0, message: `Ошибка: ${err.message}` });
+  } catch (error) {
+    console.error('Ошибка при обработке PDF и сохранении данных в базу данных:', error);
+    io.emit('upload_status', { progress: 0, message: `Ошибка: ${error.message}` });
   }
 }
 
 // Экспорт функции processPDF
-module.exports = {
-    processPDF
-};
+module.exports = { processPDF };
