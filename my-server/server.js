@@ -47,8 +47,11 @@ const io = socketIo(server, {
 });
 
 io.on('connection', (socket) => {
-    console.log('Client connected');
-});
+    console.log('A user connected');
+    socket.on('disconnect', () => {
+      console.log('User disconnected');
+    });
+  });
 
 app.use(cors()); // Разрешает все источники
 app.use(bodyParser.json({ limit: '10mb' }));
@@ -264,8 +267,7 @@ app.get('/kyz', (req, res) => {
     if (cachedData) {
         return res.json({ data: cachedData });
     }
-
-    // Один SQL-запрос вместо двух
+    
     const query = `
         SELECT line, Model, Size, fullline 
         FROM lines 

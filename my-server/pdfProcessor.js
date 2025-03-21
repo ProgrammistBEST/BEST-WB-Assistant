@@ -59,8 +59,8 @@ function parseTextForSizesAndModel(linesArray, brandData) {
   let model = '';
 
   if (linesArray.length > 1) {
-    const secondLine = linesArray[4] || '';
-    const thirdLine = linesArray[2] || '';
+    const secondLine = linesArray[4] || ''; // Пятая строка
+    const thirdLine = linesArray[2] || ''; // Третья строка
 
     if (isValidSize(secondLine)) {
       sizes = secondLine;
@@ -74,32 +74,62 @@ function parseTextForSizesAndModel(linesArray, brandData) {
   return { lines, sizes, model };
 }
 
-// Сохранение данных в базу данных пакетно
+// Сохранение всех данных в базу данных с проверкой на дубликатов
 async function saveDataToDatabase(db, fileName, pageDataList, brandData) {
   const createdAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const brand = brandData;
+  const color = 'Multicolor';
 
-  // Подготовка данных для пакетной вставки
-  const insertValues = pageDataList.map(({ pageData, pageNumber, lines, sizes, model }) => [
-    brandData,
-    pageData,
-    pageNumber,
+  // Подготовка массива данных для проверки дубликатов
+  const linesToCheck = pageDataList.map(({ lines, sizes, model }) => [
     lines,
     sizes,
-    createdAt,
+    brand,
     model || 'Multimodel',
-    'Multicolor',
+    color,
   ]);
 
-  if (insertValues.length === 0) return;
+  // Проверка дубликатов с помощью одного SQL-запроса
+  const placeholders = linesToCheck.map(() => '(?, ?, ?, ?, ?)').join(',');
+  const query = `
+    SELECT line, Size, brand, Model, color 
+    FROM lines 
+    WHERE (line, Size, brand, Model, color) IN (${placeholders})
+  `;
+  const flatValues = linesToCheck.flat();
 
-  // Пакетная вставка записей
-  const placeholders = insertValues.map(() => '(?,?,?,?,?,?,?,?)').join(',');
-  const flatValues = insertValues.flat();
+  const duplicates = await db.all(query, flatValues);
 
-  await db.run(
-    `INSERT INTO lines (brand, data, page, line, Size, created_at, model, color) VALUES ${placeholders}`,
-    flatValues
-  );
+  // Создание множества для быстрого поиска дубликатов
+  const duplicateSet = new Set(duplicates.map(row => `${row.line}|${row.Size}|${row.brand}|${row.Model}|${row.color}`));
+
+  // Подготовка оператора для вставки новых записей
+  const insertStmt = await db.prepare(`
+    INSERT INTO lines (brand, data, page, line, Size, created_at, model, color)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  // Вставка только уникальных записей
+  for (const { pageData, pageNumber, lines, sizes, model } of pageDataList) {
+    const key = `${lines}|${sizes}|${brand}|${model || 'Multimodel'}|${color}`;
+    if (!duplicateSet.has(key)) {
+      await insertStmt.run(
+        brand,
+        pageData,
+        pageNumber,
+        lines,
+        sizes,
+        createdAt,
+        model || 'Multimodel', // Используем model с маленькой буквы
+        color
+      );
+    } else {
+      console.log(`Пропущен дубликат: ${lines}`);
+    }
+  }
+
+  // Завершение подготовленного оператора
+  await insertStmt.finalize();
 }
 
 // Обработка порции страниц PDF
