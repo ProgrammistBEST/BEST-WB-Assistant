@@ -12,7 +12,6 @@ const getApiById = async (id, company_name, category) => {
       }
   
       const data = await response.json();
-    //   console.log('Ответ от сервера:', data);
   
       if (!data.token) {
         throw new Error(`Токен отсутствует в ответе: ${JSON.stringify(data)}`);

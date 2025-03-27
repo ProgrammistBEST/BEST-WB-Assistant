@@ -506,14 +506,7 @@ function addKyzForModelsToDilivery() {
             modelInfo.size = sizeElement.textContent;
 
             if (brand == 'Best26') {
-
                 modelInfo.model = modelElement.textContent.replace(/[.]/g, '');
-                if (statusProgram.brand == 'Best26') {
-                    if (modelInfo.model == '61' || modelInfo.model == '81' || modelInfo.model == '82' || modelInfo.model == '83' || modelInfo.model == '83') {
-                        modelInfo.model += 'ч'
-                    }
-                }
-                console.log(modelInfo.model)
             } else {
                 modelInfo.model = 'Multimodel'
             }
@@ -543,14 +536,10 @@ function addKyzForModelsToDilivery() {
     Promise.all(fetchPromises).then(results => {
         if (statusProgram.brand == 'Best26') {
             results.forEach(({ model, kyzElements }) => {
-
                 console.log(model, kyzElements)
                 // Обновляем элементы на странице
                 document.querySelectorAll(`.sectionForAcceptDeliverynew li[article-numb="${model}"]`).forEach((element, index) => {
                     let modelElement = element.querySelector('h5.headerLabelForModel').textContent;
-                    if (modelElement == '61' || modelElement == '81' || modelElement == '82' || modelElement == '83' || modelElement == '83') {
-                        modelElement += 'ч'
-                    }
                     let sizeElement = element.querySelector('.Size');
                     if (kyzElements[index] && modelElement && modelElement == kyzElements[index].Model && sizeElement.textContent == kyzElements[index].Size) {
                         element.querySelector('.kyzArea').textContent = kyzElements[index].line;

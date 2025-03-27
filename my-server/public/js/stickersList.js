@@ -11,7 +11,7 @@ let DataForRemainings = {};
 async function getCargoes() {
 
     let nextNumber = 0;
-    let limit = 100;
+    let limit = 500;
     let deliveryList = [];
     let ArrayForRemainings = [];
 
@@ -53,15 +53,6 @@ async function getCargoes() {
                         orders: value.orders
                     };
                 }
-                // else {
-                //     ArrayForRemainings.push(value);
-                //     DataForRemainings[value.id] = {
-                //         id: value.id,
-                //         name: value.name,
-                //         done: value.done,
-                //         orders: value.orders
-                //     };
-                // }
             }
         })
         } catch (error) {

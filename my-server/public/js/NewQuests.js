@@ -653,11 +653,6 @@ let boxescountInPanel = 0;
 
 function createContainerForBox(article, items, a) {
   let preArt = article;
-  if (statusProgram.brand == 'Best26') {
-    if (preArt == '61' || preArt == '81' || preArt == '82' || preArt == '83' || preArt == '83') {
-      preArt += 'ч'
-    }
-  }
 
   const container = document.createElement('div');
   container.className = 'box mainbox';

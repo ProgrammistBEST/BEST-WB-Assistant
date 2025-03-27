@@ -4,8 +4,8 @@ async function loadPLimit() {
   return pLimit.default; // Используйте .default для доступа к экспорту по умолчанию
 }
 
+const fs = require('fs').promises;
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
 const path = require('path');
 const pdfPoppler = require('pdf-poppler');
 const qrdecoder = require('..')();
@@ -53,18 +53,23 @@ async function findLinesWithoutFullQR(brandData) {
 
 // Функция для обрезки страниц PDF
 async function cropPDFPages(pdfBytes, brandData) {
-  const pdfDoc = await PDFDocument.load(pdfBytes);
+  try {
+    const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
-  const pages = pdfDoc.getPages();
-  pages.forEach((page) => {
-    if (brandData === 'Bestshoes') {
-      drawWhiteRectangles(page, { x: 0, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
-    } else {
-      drawWhiteRectangles(page, { x: 85, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
-    }
-  });
+    const pages = pdfDoc.getPages();
+    pages.forEach((page) => {
+      if (brandData === 'Bestshoes') {
+        drawWhiteRectangles(page, { x: 0, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
+      } else {
+        drawWhiteRectangles(page, { x: 85, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
+      }
+    });
 
-  return pdfDoc.save();
+    return pdfDoc.save();
+  } catch (error) {
+    console.error('Ошибка при загрузке PDF:', error);
+    throw new Error('PDF-файл поврежден или имеет некорректный формат.');
+  }
 }
 
 // Функция для рисования белых прямоугольников на странице
@@ -85,13 +90,14 @@ async function convertPDFToPNG(pdfBytes) {
 
   try {
     // Записываем PDF в файл
-    await fs.promises.writeFile(tempPdfPath, pdfBytes);
+    await fs.writeFile(tempPdfPath, pdfBytes);
 
     // Конвертируем PDF в PNG
     await pdfPoppler.convert(tempPdfPath, options);
 
     // Получаем путь к PNG файлу
     const pngFilePath = path.join(options.out_dir, `${options.out_prefix}-1.png`);
+    console.log(`Конвертация завершена: ${pngFilePath}`);
 
     return pngFilePath;
   } catch (error) {
@@ -99,10 +105,11 @@ async function convertPDFToPNG(pdfBytes) {
     throw error;
   } finally {
     // Удаляем временный PDF файл, если он существует
-    if (fs.existsSync(tempPdfPath)) {
-      try {
-        await fs.promises.unlink(tempPdfPath); // Используем асинхронное удаление
-      } catch (unlinkError) {
+    try {
+      await fs.access(tempPdfPath); // Проверяем существование файла
+      await fs.unlink(tempPdfPath); // Удаляем файл
+    } catch (unlinkError) {
+      if (unlinkError.code !== 'ENOENT') {
         console.warn(`Не удалось удалить временный PDF файл: ${tempPdfPath}`, unlinkError);
       }
     }
@@ -151,28 +158,37 @@ async function updateDatabaseWithQRCode(qrCode, line) {
 }
 
 // Функция для очистки временных файлов
-function cleanupFiles(filePaths) {
-  filePaths.forEach(filePath => {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+async function cleanupFiles(filePaths) {
+  for (const filePath of filePaths) {
+    if (!filePath) continue; // Пропускаем null или undefined
+    try {
+      await fs.access(filePath); // Проверяем существование файла
+      await fs.unlink(filePath); // Удаляем файл
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.warn(`Не удалось удалить файл: ${filePath}`, error);
+      }
     }
-  });
+  }
 }
 
 // Основная функция для обработки строки данных
 async function processLine(row, brandData) {
   const { line, data } = row;
 
+  let pngFilePath = null;
+  let croppedImagePath = null;
+
   try {
-    // Обрезка PDF
+    // Проверка на целостность PDF
     const croppedPdfBytes = await cropPDFPages(data, brandData);
 
     // Конвертация PDF в PNG
-    const pngFilePath = await convertPDFToPNG(croppedPdfBytes);
+    pngFilePath = await convertPDFToPNG(croppedPdfBytes);
 
     // Обрезка изображения
     const cropOptions = getCropOptions(brandData).cropArea;
-    const croppedImagePath = await cropImage(pngFilePath, cropOptions);
+    croppedImagePath = await cropImage(pngFilePath, cropOptions);
 
     // Расшифровка QR-кода
     const decodedQR = await decodeQRCode(croppedImagePath);
@@ -182,33 +198,73 @@ async function processLine(row, brandData) {
     }
 
     // Очистка временных файлов
-    cleanupFiles([pngFilePath, croppedImagePath]);
+    await cleanupFiles([pngFilePath, croppedImagePath]);
   } catch (error) {
     console.error(`Ошибка при обработке строки ${line}:`, error);
+    await cleanupFiles([pngFilePath, croppedImagePath]); // Убедитесь, что временные файлы удалены
+  }
+}
+
+// Функция для проверки существования и создания папок
+async function ensureDirectoriesExist() {
+  const directories = ['mamka', 'papka'];
+
+  for (const dir of directories) {
+    const dirPath = path.join(__dirname, dir);
+
+    try {
+      // Проверяем, существует ли папка
+      await fs.access(dirPath);
+
+      // Очищаем содержимое папки
+      const files = await fs.readdir(dirPath);
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        await fs.unlink(filePath); // Удаляем файлы
+      }
+      console.log(`Папка "${dir}" очищена.`);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // Если папка не существует, создаем её
+        await fs.mkdir(dirPath, { recursive: true });
+        console.log(`Папка "${dir}" создана.`);
+      } else {
+        console.error(`Ошибка при работе с папкой "${dir}":`, error);
+        throw error;
+      }
+    }
   }
 }
 
 // В функции startQRdecoder используйте динамический импорт
 async function startQRdecoder(brandData, io) {
-  const pLimit = await loadPLimit();
-  const limit = pLimit(5); // Ограничение до 5 параллельных задач
+  try {
+    // Проверяем и очищаем папки
+    await ensureDirectoriesExist();
 
-  const linesWithoutFullQR = await findLinesWithoutFullQR(brandData);
-  const totalLines = linesWithoutFullQR.length;
-  let processedLines = 0;
+    const pLimit = await loadPLimit();
+    const limit = pLimit(5); // Ограничение до 5 параллельных задач
 
-  io.emit('upload_status', { progress: 0, message: 'Начинаем обработку...' });
+    const linesWithoutFullQR = await findLinesWithoutFullQR(brandData);
+    const totalLines = linesWithoutFullQR.length;
+    let processedLines = 0;
 
-  await Promise.all(linesWithoutFullQR.map((row, index) => 
-    limit(async () => {
-      await processLine(row, brandData);
-      processedLines++;
-      const progress = Math.round((processedLines / totalLines) * 100);
-      io.emit('upload_status', { progress, message: `Обработано ${processedLines} из ${totalLines}` });
-    })
-  ));
+    io.emit('upload_status', { progress: 0, message: 'Начинаем обработку...' });
 
-  io.emit('upload_status', { progress: 100, message: 'Обработка завершена!' });
+    await Promise.all(linesWithoutFullQR.map((row, index) => 
+      limit(async () => {
+        await processLine(row, brandData);
+        processedLines++;
+        const progress = Math.round((processedLines / totalLines) * 100);
+        io.emit('upload_status', { progress, message: `Обработано ${processedLines} из ${totalLines} на ${brandData}` });
+      })
+    ));
+
+    io.emit('upload_status', { progress: 100, message: 'Обработка завершена!' });
+  } catch (error) {
+    console.error('Ошибка при выполнении startQRdecoder:', error);
+    io.emit('upload_status', { progress: 100, message: 'Произошла ошибка при обработке.' });
+  }
 }
 
 module.exports = { startQRdecoder };
