@@ -51,8 +51,12 @@ async function findLinesWithoutFullQR(brandData) {
   });
 }
 
-// Функция для обрезки страниц PDF
-async function cropPDFPages(pdfBytes, brandData) {
+// Обрезка страниц PDF
+async function cropPDFPages(pdfBytes, brandData, signal) {
+  if (signal.aborted) {
+    throw new DOMException('Операция отменена.', 'AbortError');
+  }
+
   try {
     const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
@@ -72,14 +76,19 @@ async function cropPDFPages(pdfBytes, brandData) {
   }
 }
 
+
 // Функция для рисования белых прямоугольников на странице
 function drawWhiteRectangles(page, rect1, rect2) {
   page.drawRectangle({ ...rect1, color: rgb(1, 1, 1), borderWidth: 0 });
   page.drawRectangle({ ...rect2, color: rgb(1, 1, 1), borderWidth: 0 });
 }
 
-// Функция для конвертации PDF в PNG
-async function convertPDFToPNG(pdfBytes) {
+// Конвертация PDF в PNG
+async function convertPDFToPNG(pdfBytes, signal) {
+  if (signal.aborted) {
+    throw new DOMException('Операция отменена.', 'AbortError');
+  }
+
   const tempPdfPath = path.join(__dirname, 'mamka', `temp_${Date.now()}.pdf`);
   const options = {
     format: "png",
@@ -89,25 +98,24 @@ async function convertPDFToPNG(pdfBytes) {
   };
 
   try {
-    // Записываем PDF в файл
     await fs.writeFile(tempPdfPath, pdfBytes);
 
-    // Конвертируем PDF в PNG
+    if (signal.aborted) {
+      throw new DOMException('Операция отменена.', 'AbortError');
+    }
+
     await pdfPoppler.convert(tempPdfPath, options);
 
-    // Получаем путь к PNG файлу
     const pngFilePath = path.join(options.out_dir, `${options.out_prefix}-1.png`);
     console.log(`Конвертация завершена: ${pngFilePath}`);
-
     return pngFilePath;
   } catch (error) {
     console.error('Ошибка конвертации PDF в PNG:', error);
     throw error;
   } finally {
-    // Удаляем временный PDF файл, если он существует
     try {
-      await fs.access(tempPdfPath); // Проверяем существование файла
-      await fs.unlink(tempPdfPath); // Удаляем файл
+      await fs.access(tempPdfPath);
+      await fs.unlink(tempPdfPath);
     } catch (unlinkError) {
       if (unlinkError.code !== 'ENOENT') {
         console.warn(`Не удалось удалить временный PDF файл: ${tempPdfPath}`, unlinkError);
@@ -116,8 +124,12 @@ async function convertPDFToPNG(pdfBytes) {
   }
 }
 
-// Функция для обрезки изображения
-async function cropImage(inputPath, cropOptions) {
+// Обрезка изображения
+async function cropImage(inputPath, cropOptions, signal) {
+  if (signal.aborted) {
+    throw new DOMException('Операция отменена.', 'AbortError');
+  }
+
   const outputPath = inputPath.replace('.png', '_cropped.png');
 
   try {
@@ -129,19 +141,6 @@ async function cropImage(inputPath, cropOptions) {
     console.error('Ошибка при обрезке изображения:', error);
     throw error;
   }
-}
-
-// Функция для расшифровки QR-кода
-async function decodeQRCode(filePath) {
-  return new Promise((resolve, reject) => {
-    qrdecoder.decode(filePath, (err, result) => {
-      if (err) {
-        resolve(null);
-      } else {
-        resolve(result.replace(/\x1D/g, ''));
-      }
-    });
-  });
 }
 
 // Функция для обновления базы данных
@@ -205,6 +204,23 @@ async function processLine(row, brandData) {
   }
 }
 
+// Расшифровка QR-кода
+async function decodeQRCode(filePath, signal) {
+  if (signal.aborted) {
+    throw new DOMException('Операция отменена.', 'AbortError');
+  }
+
+  return new Promise((resolve, reject) => {
+    qrdecoder.decode(filePath, (err, result) => {
+      if (err) {
+        resolve(null);
+      } else {
+        resolve(result.replace(/\x1D/g, ''));
+      }
+    });
+  });
+}
+
 // Функция для проверки существования и создания папок
 async function ensureDirectoriesExist() {
   const directories = ['mamka', 'papka'];
@@ -237,7 +253,7 @@ async function ensureDirectoriesExist() {
 }
 
 // В функции startQRdecoder используйте динамический импорт
-async function startQRdecoder(brandData, io) {
+async function startQRdecoder(brandData, signal, io) {
   try {
     // Проверяем и очищаем папки
     await ensureDirectoriesExist();

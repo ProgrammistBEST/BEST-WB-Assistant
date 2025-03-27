@@ -4,19 +4,24 @@ const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 const app = express();
 const cors = require("cors");
-const port = 3000;
-const portSocket = 3002;
 const fs = require("fs");
 const multer = require("multer");
-const { processPDF } = require("./pdfProcessor.js");
+const { processPDF } = require('./pdfProcessor');
 const mysql = require("mysql2/promise");
 const NodeCache = require("node-cache");
 const cache = new NodeCache({ stdTTL: 60 }); // Кэш с временем жизни 60 секунд
+const { startQRdecoder } = require("./node-zxing-master/example/test");
 
 // Для работы с сокетами
 const http = require("http");
 const socketIo = require("socket.io");
-const server = http.createServer();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 const dbApi = mysql.createPool({
   host: "192.168.100.170",
@@ -39,15 +44,39 @@ const dbConfig = {
 // Создаем пул соединений с базой данных
 const pool = mysql.createPool(dbConfig);
 
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
+// Глобальный объект для управления загрузками
+const activeUploads = new Map(); // Хранит AbortController для каждой загрузки
 
+// Конфигурация multer для обработки загрузки файлов
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+// Обработка событий WebSocket
 io.on("connection", (socket) => {
   console.log("A user connected");
+
+  // Обработка команды отмены
+  socket.on("cancel_upload", async ({ uploadId }) => {
+    try {
+      const abortController = activeUploads.get(uploadId);
+      if (!abortController) {
+        console.log(`Загрузка с ID ${uploadId} не найдена.`);
+        socket.emit("upload_status", { progress: 0, message: "Нет активных загрузок для отмены." });
+        return;
+      }
+
+      // Отменяем загрузку
+      abortController.abort();
+      activeUploads.delete(uploadId);
+
+      console.log(`Загрузка с ID ${uploadId} отменена.`);
+      socket.emit("upload_status", { progress: 0, message: "Загрузка отменена пользователем." });
+    } catch (err) {
+      console.error("Ошибка при отмене загрузки:", err);
+      socket.emit("upload_status", { progress: 0, message: "Ошибка при отмене загрузки." });
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
@@ -391,12 +420,10 @@ app.put("/kyzUpdatestatus", (req, res) => {
   stmt.finalize();
 });
 
-// Конфигурация multer для обработки загрузки файлов
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-// Загрузка нового киза
+// Загрузка нового КИЗа
 app.post("/uploadNewKyz", upload.single("pdf"), async (req, res) => {
+  let transactionStarted = false;
+
   try {
     if (!req.file) {
       return res.status(400).send({ message: "No file uploaded." });
@@ -406,12 +433,63 @@ app.post("/uploadNewKyz", upload.single("pdf"), async (req, res) => {
     const fileBuffer = req.file.buffer;
     const brandData = JSON.parse(req.body.brandData);
 
-    // Обработка PDF
-    await processPDF(fileBuffer, fileName, brandData, io);
+    // Генерируем уникальный ID для загрузки
+    const uploadId = Date.now();
+    const abortController = new AbortController();
+    activeUploads.set(uploadId, abortController);
 
+    // Начало транзакции
+    await new Promise((resolve, reject) => {
+      dbKYZ.run("BEGIN TRANSACTION;", (err) => {
+        if (err) {
+          console.error("Failed to start transaction:", err);
+          return reject(err);
+        }
+        transactionStarted = true;
+        resolve();
+      });
+    });
+
+    // Уведомляем клиентов о начале загрузки
+    io.emit("upload_status", { progress: 10, message: "Начинается загрузка..." });
+
+    // Обработка PDF
+    await processPDF(fileBuffer, fileName, brandData, abortController.signal, io);
+
+    // Декодирование QR-кодов
+    await startQRdecoder(brandData, abortController.signal, io);
+
+    // Подтверждение транзакции
+    await new Promise((resolve, reject) => {
+      dbKYZ.run("COMMIT;", (err) => {
+        if (err) {
+          console.error("Commit failed:", err);
+          return reject(err);
+        }
+        resolve();
+      });
+    });
+
+    activeUploads.delete(uploadId); // Удаляем загрузку из активных
     res.status(200).send({ message: "File processed successfully." });
   } catch (err) {
     console.error("Error processing file:", err);
+
+    // Откат транзакции в случае ошибки
+    if (transactionStarted) {
+      await new Promise((resolve, reject) => {
+        dbKYZ.run("ROLLBACK;", (err) => {
+          if (err) {
+            console.error("Rollback failed:", err);
+            reject(err);
+          } else {
+            console.log("Rollback completed successfully.");
+            resolve();
+          }
+        });
+      });
+    }
+
     res.status(500).send({ message: "Error processing file." });
   }
 });
@@ -852,13 +930,11 @@ function createExcelReport(available, shortage) {
 }
 
 // Запуск сервера
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+const PORT = 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
-// Запуск сервера сокетов
-server.listen(portSocket, () => {
-  console.log(`WebSocket is running on port https://localhost:${portSocket}`);
-});
+
 // Закрытие подключения к базе данных при завершении работы сервера
 process.on("SIGINT", () => {
   db.close((err) => {
