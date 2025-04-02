@@ -188,7 +188,7 @@ function untileHonestSignNo() {
 }
 
 // UntileHonestSign.js
-const socket = io(`http://${window.location.hostname}:3002`);
+const socket = io(`http://${window.location.hostname}:3000`);
 
 // Элементы DOM
 const modalOverlay = document.getElementById("modal-overlay");
@@ -264,93 +264,78 @@ socket.on("upload_status", ({ progress, message }) => {
 
 // Обработчик клика на кнопку "Сохранить"
 document
-    .getElementById("UniqButtonAddNewKYZ")
-    .addEventListener("click", async function () {
-        const fileInput = document.getElementById("file-input");
-        const file = fileInput.files[0];
+  .getElementById("UniqButtonAddNewKYZ")
+  .addEventListener("click", async function () {
+    const fileInput = document.getElementById("file-input");
+    const file = fileInput.files[0];
 
-        if (!file) {
-            alert("Пожалуйста, выберите файл.");
-            return;
-        }
+    if (!file) {
+      alert("Пожалуйста, выберите файл.");
+      return;
+    }
 
-        if (
-            statusProgram.brand !== "Armbest" &&
-            statusProgram.brand !== "Best26" &&
-            statusProgram.brand !== "Bestshoes"
-        ) {
-            alert("Недопустимый бренд.");
-            return;
-        }
+    if (
+      statusProgram.brand !== "Armbest" &&
+      statusProgram.brand !== "Best26" &&
+      statusProgram.brand !== "Bestshoes"
+    ) {
+      alert("Недопустимый бренд.");
+      return;
+    }
 
-        const userConfirmed = confirm(
-            `Вы уверены, что хотите добавить новые KYZ для "${statusProgram.brand}"`
-        );
-        if (!userConfirmed) {
-            return;
-        }
+    const userConfirmed = confirm(
+      `Вы уверены, что хотите добавить новые KYZ для "${statusProgram.brand}"`
+    );
+    if (!userConfirmed) {
+      return;
+    }
 
-        // Показываем модальное окно перед отправкой файла
-        showModalHS({ progress: 0, message: "Начинается загрузка..." });
+    // Показываем модальное окно перед отправкой файла
+    showModalHS({ progress: 0, message: "Начинается загрузка..." });
 
-        const formData = new FormData();
-        formData.append("pdf", file);
-        formData.append("brandData", JSON.stringify(statusProgram.brand));
+    const formData = new FormData();
+    formData.append("pdf", file); // Исправлено имя поля
+    formData.append("brandData", JSON.stringify(statusProgram.brand));
 
-        try {
-            const response = await fetch("/uploadNewKyz", {
-                method: "POST",
-                body: formData,
-            });
+    try {
+      const response = await fetch("/uploadNewKyz", {
+        method: "POST",
+        body: formData,
+      });
 
-            if (response.ok) {
-                const result = await response.json();
+      if (response.ok) {
+        const result = await response.json();
 
-                // Уведомляем сервер о начале загрузки
-                socket.emit("upload_start");
+        // Уведомляем сервер о начале загрузки
+        socket.emit("upload_start");
 
-                // Симуляция прогресса
-                setTimeout(() => {
-                    showModalHS({
-                        progress: 50,
-                        message: "Обработка данных...",
-                    });
-                }, 500);
+        // Симуляция прогресса
+        setTimeout(() => {
+          showModalHS({
+            progress: 50,
+            message: "Обработка данных...",
+          });
+        }, 500);
 
-                setTimeout(() => {
-                    showModalHS({
-                        progress: 100,
-                        message: "Загрузка завершена!",
-                    });
+        setTimeout(() => {
+          showModalHS({
+            progress: 100,
+            message: "Загрузка завершена!",
+          });
 
-                    // После завершения показываем кнопку "Закрыть"
-                    closeModalBtn.style.display = "inline-block";
-                    cancelUploadBtn.style.display = "none";
+          // После завершения показываем кнопку "Закрыть"
+          closeModalBtn.style.display = "inline-block";
+          cancelUploadBtn.style.display = "none";
 
-                    setTimeout(hideModal, 2000); // Скрываем модальное окно через 2 секунды
-                }, 2000);
-
-                // Отображаем сообщение об успехе
-                const successMessage =
-                    document.getElementById("success-message");
-                if (successMessage) {
-                    setTimeout(() => {
-                        successMessage.style.opacity = 1;
-                        setTimeout(() => {
-                            successMessage.style.opacity = 0;
-                            setTimeout(() => {
-                                successMessage.style.display = "none";
-                            }, 1000);
-                        }, 4000);
-                    }, 200);
-                }
-            } else {
-                alert("Ошибка при загрузке файла.");
-                hideModal();
-            }
-        } catch (err) {
-            console.error("Error:", err);
-            alert("Ошибка при загрузке файла.");
-            hideModal();
-        }
-    });
+          setTimeout(hideModal, 2000); // Скрываем модальное окно через 2 секунды
+        }, 2000);
+      } else {
+        alert("Ошибка при загрузке файла.");
+        hideModal();
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Ошибка при загрузке файла.");
+      hideModal();
+    }
+  });
