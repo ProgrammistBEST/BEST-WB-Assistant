@@ -498,7 +498,7 @@ async function finishDocument(choosedVariant) {
                 return
             }
             try {
-                const responsePDF = await fetch('/getLineToFinishDocument', {
+                const responsePDF = await fetch('/getCryptoToFinishDocument', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

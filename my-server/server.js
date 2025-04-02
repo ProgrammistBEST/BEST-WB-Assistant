@@ -247,7 +247,7 @@ app.post('/kyzComeback', async (req, res) => {
     const query = `
           UPDATE ?? 
           SET Status = 'Comeback' 
-          WHERE crypto = ? AND brand = ? AND size = ?
+          WHERE Crypto = ? AND Brand = ? AND Size = ?
       `;
     const [result] = await pool.execute(query, [tableName, crypto, brand, size]);
 
@@ -264,7 +264,7 @@ app.post('/kyzComeback', async (req, res) => {
 });
 
 // Получение ЧЗ для финального скачивания документов
-app.post('/getLineToFinishDocument', async (req, res) => {
+app.post('/getCryptoToFinishDocument', async (req, res) => {
   const { kyz, size, brand, model } = req.body;
 
   // Валидация входных данных
@@ -278,9 +278,9 @@ app.post('/getLineToFinishDocument', async (req, res) => {
 
     // Формирование запроса с использованием параметризации
     const sql = `
-      SELECT data 
+      SELECT PDF 
       FROM ?? 
-      WHERE crypto = ? AND size = ? AND brand = ?
+      WHERE Crypto = ? AND Size = ? AND Brand = ?
     `;
     const [rows] = await pool.execute(sql, [tableName, kyz, size, brand]);
 
