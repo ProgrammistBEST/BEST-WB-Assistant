@@ -605,7 +605,7 @@ async function getQuests() {
   let a = 0
 
   async function getWbSizeFromApi(skus) {
-    const response = await fetch(`http://localhost:3000/getWbSize${statusProgram.brand}?skus=${skus}`);
+    const response = await fetch(`http://${window.location.hostname}:3000/getWbSize${statusProgram.brand}?skus=${skus}`);
     if (response.ok) {
       const data = await response.json();
       return data.tech_size;

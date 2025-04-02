@@ -5,40 +5,13 @@ let buttonUpdate = document.getElementById('updateBDButton');
 let ChangeArray = []
 let NewModelsArray = []
 let arrModels = []
-document.addEventListener('DOMContentLoaded', function () {
-    function loadModelFromDB() {
-        fetch(`/getModel${statusProgram.brand}`)
-            .then(response => response.json()) // Преобразуем ответ в JSON
-            .then(data => {
-                document.getElementById('sectionForDatabaseModels').innerHTML = ''
-                // Обработка полученных данных
-                let output = '<div class="grid-column-models">';
-                data.forEach(item => {
-                    if (!arrModels.includes(item.vendor_code)) {
-                        output += `<button class="model-elemDB" onclick="addModelsForChanges('${item.vendor_code}', '${item.tech_size}','${item.pair}')">${item.vendor_code}</button>`;
-                        arrModels.push(item.vendor_code)
-                    }
-                });
-                output += '</div>';
-                document.getElementById('sectionForDatabaseModels').innerHTML = output;
-                document.getElementById('sectionForDatabaseModels').innerHTML += `<div class="choosedModel_forchanged">
-                                                                                <div class='boxforinfoDB'>
-                                                                                    <button class="buttonAddModelInDB" onclick='AddNewModelsForDB(0,0,0)'>Добавить новую модель</button>
-                                                                                    <button class="buttonAddModelInDB">Мне нужна помощь</button>
-                                                                                </div>
-                                                                                </div>`
-            })
-            .catch(error => console.error('Ошибка загрузки данных:', error));
-    }
-    loadModelFromDB()
-});
 
 buttonUpdate.onclick = function () {
     if (document.getElementById('updateBDButton').classList.contains('off')) {
         document.getElementById('updateBDButton').classList.remove('off')
         gif.style.display = ''
         document.querySelector('.sectionForDatabaseModels').style.opacity = 1
-        document.querySelector('.grid-column-models').style.display = 'grid'
+        // document.querySelector('.grid-column-models').style.display = 'grid'
         document.querySelector('.sectionForDatabaseModels').style.width = '100%'
         document.querySelector('.sectionForDatabaseModels').style.height = '100%'
 
@@ -286,125 +259,8 @@ function button_changeModelDB(vendorcode, wbsize, pair) {
     })
 }
 
-let array_characters_missing = []
-let arraySizeFromDBKyz = []
-
-document.addEventListener('DOMContentLoaded', function () {
-    const brand = statusProgram && statusProgram.brand;
-    if (!brand) {
-        return;
-    }
-
-    fetch(`/kyzSizes?brand=${encodeURIComponent(brand)}`)
-        .then(response => response.json())
-        .then(data => {
-            const carouselInner = document.getElementById('carousel-inner');
-            let slideContent = '';
-            let itemCount = 0;
-            const itemsPerPage = 8;
-            const pages = Math.ceil(data.length / itemsPerPage);
-
-            for (let page = 0; page < pages; page++) {
-                const start = page * itemsPerPage;
-                const end = Math.min(start + itemsPerPage, data.length);
-                const isActive = page === 0 ? 'active' : '';
-
-                slideContent += `<div class="carousel-item ${isActive}"><ul class="list-group">`;
-                for (let i = start; i < end; i++) {
-                    arraySizeFromDBKyz.push(data[i].Size)
-                    let colorKYZ = (data[i].Quantity < 100) ? "red" : "black";
-                    if (data[i].Quantity < 100) {
-                        let item = {
-                            [data[i].Size]: data[i].Quantity
-                        }
-                        array_characters_missing.push(item)
-                    }
-                    if (statusProgram.brand == 'Best26') {
-                        slideContent += `
-                        <li class="list-group-item">
-                        <span class="size-span">${data[i].Size}</span> - <span class="size-span">${data[i].Model}</span> - <span class="quantity-span" style="color: ${colorKYZ};">${data[i].Quantity}</span>                        </li>
-                    `;
-                    } else {
-                        slideContent += `
-                        <li class="list-group-item">
-                        <span class="size-span">${data[i].Size}</span> - <span class="quantity-span" style="color: ${colorKYZ};">${data[i].Quantity}</span>                        </li>
-                    `;
-                    }
-                }
-
-                slideContent += `</ul></div>`;
-            }
-
-            carouselInner.innerHTML = slideContent;
-
-            if (array_characters_missing.length > 0) {
-
-                const modalContent = document.querySelector('.text-message');
-                modalContent.innerHTML = `Срочно добавьте Честный знак на ${statusProgram.brand}:`
-                document.querySelector('body').style.overflow = 'hidden';
-                modalContent.innerHTML += array_characters_missing.map(item => {
-                    const size = Object.keys(item)[0];
-                    const quantity = item[size];
-                    return `<p style='font-size: 1.1vh'>${size} раз. - ${quantity} ед.</p>`;
-                }).join('');
-
-                document.getElementById('success-message').style.display = 'flex'
-                document.querySelector('.exclamation_point_module').style.display = 'block'
-                setTimeout(() => {
-                    document.getElementById('success-message').style.opacity = 1
-                    setTimeout(() => {
-                        document.querySelector('.message').style.transform = "translate(220px)"
-                        document.querySelector('.exclamation_point_module').style.display = 'none'
-                        document.getElementById('success-message').style.opacity = 0
-                        setTimeout(() => {
-                            document.getElementById('success-message').style.display = 'none'
-                            document.querySelector('.message').style.transform = "translate(0px)"
-                            document.querySelector('body').style.overflow = '';
-                        }, 1000);
-                    }, 5000);
-                }, 1000);
-            }
-
-            const range = [];
-            for (let i = 24; i <= 48; i++) {
-                range.push(i);
-            }
-            // Преобразование строковых значений массива в числа и обработка диапазонов
-            const expandedArraySize = arraySizeFromDBKyz.flatMap(value => {
-                if (value.includes('-')) {
-                    const [start, end] = value.split('-').map(Number);
-                    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-                } else {
-                    return Number(value);
-                }
-            });
-
-            const missingValues = range.filter(value => !expandedArraySize.includes(value));
-
-            if (missingValues.length > 0) {
-                setTimeout(() => {
-                    document.querySelector('body').style.overflow = 'hidden';
-                    document.querySelector('.text-message').innerHTML = `Отсутствуют следующие размеры на ${statusProgram.brand}: <br>` + missingValues
-                    document.getElementById('success-message').style.display = 'flex'
-                    document.querySelector('.exclamation_point_module').style.display = 'block'
-                    setTimeout(() => {
-                        document.getElementById('success-message').style.opacity = 1
-                        setTimeout(() => {
-                            document.querySelector('.message').style.transform = "translate(220px)"
-                            document.querySelector('.exclamation_point_module').style.display = 'none'
-                            document.getElementById('success-message').style.opacity = 0
-                            setTimeout(() => {
-                                document.getElementById('success-message').style.display = 'none'
-                                document.querySelector('.message').style.transform = "translate(0px)"
-                                document.querySelector('body').style.overflow = '';
-                            }, 1000);
-                        }, 5000);
-                    }, 500);
-                }, 7500);
-            }
-        })
-        .catch(error => console.error('Error fetching sizes:', error));
-});
+let array_characters_missing = [];
+let arraySizeFromDBKyz = [];
 
 let area = document.querySelector('.AddingKyzFromUsersFile')
 function openSizeKyzFromDB() {

@@ -19,13 +19,13 @@ const SQL_SELECT_LINES_BY_BRAND = `
 `;
 const SQL_UPDATE_FULLLINE = `UPDATE lines SET fullline = ? WHERE line = ?`;
 
-let db = new sqlite3.Database('./database/honestsigndb.db', (err) => {
-  if (err) {
-    console.error('Could not connect to database', err);
-  } else {
-    console.log('Успешное подключение honestsigndb для декодирования');
-  }
-});
+// let db = new sqlite3.Database('./database/honestsigndb.db', (err) => {
+//   if (err) {
+//     console.error('Could not connect to database', err);
+//   } else {
+//     console.log('Успешное подключение honestsigndb для декодирования');
+//   }
+// });
 
 // Функция для получения параметров обрезки в зависимости от бренда
 function getCropOptions(brandData) {

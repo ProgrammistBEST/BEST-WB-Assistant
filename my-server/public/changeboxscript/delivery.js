@@ -515,7 +515,7 @@ function addKyzForModelsToDilivery() {
     })
 
     // Создаём массив промисов для всех запросов
-    const fetchPromises = Models.map(modelInfo => fetch(`/kyz?Size=${modelInfo.size}&brand=${brand}&Model=${modelInfo.model}`, { method: 'GET' })
+    const fetchPromises = Models.map(modelInfo => fetch(`/kyz?size=${modelInfo.size}&brand=${brand}&model=${modelInfo.model}`, { method: 'GET' })
         .then(response => {
             if (!response.ok) {
                 throw new Error(`Ошибка сети: ${response.status}`);
@@ -542,8 +542,8 @@ function addKyzForModelsToDilivery() {
                     let modelElement = element.querySelector('h5.headerLabelForModel').textContent;
                     let sizeElement = element.querySelector('.Size');
                     if (kyzElements[index] && modelElement && modelElement == kyzElements[index].Model && sizeElement.textContent == kyzElements[index].Size) {
-                        element.querySelector('.kyzArea').textContent = kyzElements[index].line;
-                        element.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
+                        element.querySelector('.kyzArea').textContent = kyzElements[index].Crypto;
+                        // element.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
                     }
                 });
             });
@@ -552,7 +552,7 @@ function addKyzForModelsToDilivery() {
                 // Обновляем элементы на странице
                 document.querySelectorAll(`.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`).forEach((element, index) => {
                     if (kyzElements[index]) {
-                        element.textContent = kyzElements[index].line;
+                        element.textContent = kyzElements[index].Crypto;
                         element.parentElement.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
                     }
                 });

@@ -69,13 +69,13 @@ function get_article(code) {
     return [code];
 }
 
-function kyzUpdatestatus(line, dateNow) {
-    fetch('/kyzUpdatestatus', {
+function kyzUpdateStatus(article, brand, line, dateNow) {
+    fetch('/kyzUpdateStatus', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ line: line, dateNow }),
+        body: JSON.stringify({model: article, brand: brand, line: line, dateNow }),
     })
         .then(response => response.json())
         .catch((error) => {
@@ -498,7 +498,7 @@ async function finishDocument(choosedVariant) {
                 return
             }
             try {
-                const responsePDF = await fetch('/getlineToFinishDocument', {
+                const responsePDF = await fetch('/getLineToFinishDocument', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -745,7 +745,7 @@ async function finishDocument(choosedVariant) {
         item.id += `did${Math.random()}`;
         let kyzline = item.querySelector('.kyzArea').textContent
         let kyzSize = item.querySelector('.Size').textContent
-        kyzUpdatestatus(kyzline, dateNow)
+        kyzUpdateStatus(article, brand, kyzline, dateNow)
     })
 
     let boxNumberForDB = 0
