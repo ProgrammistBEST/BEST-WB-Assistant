@@ -274,7 +274,7 @@ document
     if (
       statusProgram.brand !== "Armbest" &&
       statusProgram.brand !== "Best26" &&
-      statusProgram.brand !== "Bestshoes"
+      statusProgram.brand !== "BestShoes"
     ) {
       alert("Недопустимый бренд.");
       return;

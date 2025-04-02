@@ -9,32 +9,46 @@ async function getCategoryByModel(model, brand, size) {
         const normalizedSize = size;
 
         console.log(`Обработка модели: ${normalizedModel}, бренда: ${normalizedBrand}, размера: ${normalizedSize}`);
-
-        // Обработка специального случая "Multimodel"
-        if (normalizedModel === 'multimodel') {
-            console.log('Модель Multimodel обнаружена. Определяем категорию по размеру.');
+        if (model == 'ЭВА') {
+            model = size.charAt(0);
+            console.log('model: ', model);
 
             let tableName;
-            if (/^2\d/.test(normalizedSize)) {
+            if (model == '2') {
                 tableName = `${normalizedBrand}_general_2`;
-            } else if (/^3\d/.test(normalizedSize)) {
+            } else if (model == '3') {
                 tableName = `${normalizedBrand}_general_3`;
-            } else if (/^4\d/.test(normalizedSize)) {
+            } else if (model == '4') {
                 tableName = `${normalizedBrand}_general_4`;
-            } else {
-                throw new Error(`Не удалось определить категорию для размера: ${normalizedSize}`);
             }
-
             console.log(`Таблица для Multimodel определена как: ${tableName}`);
+
             return tableName;
         }
+        // // Обработка специального случая "Multimodel"
+        // if (normalizedModel === 'multimodel') {
+        //     console.log('Модель Multimodel обнаружена. Определяем категорию по размеру.');
 
+        //     let tableName;
+        //     if (/^2\d/.test(normalizedSize)) {
+        //         tableName = `${normalizedBrand}_general_2`;
+        //     } else if (/^3\d/.test(normalizedSize)) {
+        //         tableName = `${normalizedBrand}_general_3`;
+        //     } else if (/^4\d/.test(normalizedSize)) {
+        //         tableName = `${normalizedBrand}_general_4`;
+        //     } else {
+        //         throw new Error(`Не удалось определить категорию для размера: ${normalizedSize}`);
+        //     }
+
+        //     console.log(`Таблица для Multimodel определена как: ${tableName}`);
+        //     return tableName;
+        // }
         // Выполнение SQL-запроса для получения категории
         const [rows] = await pool.query(`
             SELECT DISTINCT category 
             FROM model_categories 
             WHERE model = ?
-        `, [normalizedModel]);
+        `, [model]);
 
         // Проверка, что запрос вернул результат
         if (rows.length === 0) {

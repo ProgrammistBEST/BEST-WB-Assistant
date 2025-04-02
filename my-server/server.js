@@ -180,54 +180,47 @@ app.get('/file', (req, res) => {
 app.get('/kyz', async (req, res) => {
   const { size, brand, model } = req.query;
 
-  // Логируем входные данные
-  console.table([{ brand, size, model }]);
-
   // Валидация входных данных
   if (!size || !brand || !model) {
-      return res.status(400).json({ error: 'Параметры size, brand и model обязательны.' });
+    return res.status(400).json({ error: 'Параметры size, brand и model обязательны.' });
   }
 
   try {
-      // Получаем имя таблицы
-      const tableName = await getCategoryByModel(model, brand, size);
-      console.log(`Имя таблицы: ${tableName}`);
+    // Получаем имя таблицы
+    const tableName = await getCategoryByModel(model, brand, size);
+    console.log(`Имя таблицы: ${tableName}`);
 
-      // Проверка имени таблицы
-      if (!tableName || typeof tableName !== 'string') {
-          return res.status(500).json({ error: 'Некорректное имя таблицы.' });
-      }
+    // Проверка имени таблицы
+    if (!tableName || typeof tableName !== 'string') {
+      return res.status(500).json({ error: 'Некорректное имя таблицы.' });
+    }
 
-      // Запрос для статуса 'Comeback'
-      const comebackQuery = `
+    // Запрос для статуса 'Comeback'
+    const comebackQuery = `
           SELECT Crypto, Model, Size 
           FROM ${tableName} 
           WHERE Size = ? AND Brand = ? AND Status = 'Comeback' AND Model = ?
       `;
 
-      // Запрос для статуса 'Waiting'
-      const waitingQuery = `
+    // Запрос для статуса 'Waiting'
+    const waitingQuery = `
           SELECT Crypto, Model, Size 
           FROM ${tableName} 
           WHERE Size = ? AND Brand = ? AND Status = 'Waiting' AND Model = ?
       `;
 
-      // Выполняем оба запроса параллельно
-      const [comebackRows] = await pool.execute(comebackQuery, [size, brand, model]);
-      const [waitingRows] = await pool.execute(waitingQuery, [size, brand, model]);
+    // Выполняем оба запроса параллельно
+    const [comebackRows] = await pool.execute(comebackQuery, [size, brand, model]);
+    const [waitingRows] = await pool.execute(waitingQuery, [size, brand, model]);
 
-      // Логирование результатов запросов
-      console.log('Результаты запроса Comeback:', comebackRows);
-      console.log('Результаты запроса Waiting:', waitingRows);
-
-      // Объединяем результаты
-      const allRows = [...comebackRows, ...waitingRows];
-      res.json({ data: allRows });
+    // Объединяем результаты
+    const allRows = [...comebackRows, ...waitingRows];
+    res.json({ data: allRows });
   } catch (err) {
-      console.error('Ошибка выполнения запроса:', err.message);
-      console.error('Код ошибки:', err.code);
-      console.error('Стек вызовов:', err.stack);
-      res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Ошибка выполнения запроса:', err.message);
+    console.error('Код ошибки:', err.code);
+    console.error('Стек вызовов:', err.stack);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -264,84 +257,112 @@ app.post('/kyzComeback', async (req, res) => {
 });
 
 // Получение ЧЗ для финального скачивания документов
+// Получение ЧЗ для финального скачивания документов
 app.post('/getCryptoToFinishDocument', async (req, res) => {
   const { kyz, size, brand, model } = req.body;
 
+  // ЛОГ: Входные данные
+  console.log('Получены входные данные:');
+  console.table([{ kyz, size, brand, model }]);
+
   // Валидация входных данных
   if (!kyz || !size || !brand || !model) {
+    console.error('Ошибка валидации: Некорректные входные данные.');
     return res.status(400).json({ error: 'Некорректные входные данные' });
   }
 
   try {
     // Получение имени таблицы
-    const tableName = await getCategoryByModel(model, brand);
+    console.log('Выполняется запрос имени таблицы...');
+    const tableName = await getCategoryByModel(model, brand, size);
 
-    // Формирование запроса с использованием параметризации
+    // ЛОГ: Имя таблицы
+    console.log(`Имя таблицы: ${tableName}`);
+
+    // Проверка имени таблицы
+    if (!tableName || typeof tableName !== 'string') {
+      console.error('Ошибка: Некорректное имя таблицы.');
+      return res.status(500).json({ error: 'Некорректное имя таблицы' });
+    }
+
+    // Формирование SQL-запроса
     const sql = `
       SELECT PDF 
-      FROM ?? 
+      FROM ${tableName} 
       WHERE Crypto = ? AND Size = ? AND Brand = ?
     `;
-    const [rows] = await pool.execute(sql, [tableName, kyz, size, brand]);
+
+    // ЛОГ: Выполнение SQL-запроса
+    console.log('Выполняется SQL-запрос...');
+    console.log('SQL:', sql);
+    console.log('Параметры:', [tableName, kyz, size, brand]);
+
+    const [rows] = await pool.execute(sql, [kyz, size, brand]);
+
+    // ЛОГ: Результаты SQL-запроса
+    console.log('Результаты SQL-запроса:', rows);
 
     // Проверка, что данные найдены
     if (rows.length === 0) {
+      console.error('Ошибка: Данные не найдены.');
       return res.status(404).json({ error: 'Данные не найдены' });
     }
 
     // Отправка PDF-файла
     const result = rows[0];
+    console.log('Отправка PDF-файла...');
     res.setHeader('Content-Type', 'application/pdf');
-    res.send(result.data);
+    res.send(result.PDF);
   } catch (err) {
+    // ЛОГ: Ошибка выполнения запроса
     console.error('Ошибка запроса:', err.message);
+    console.error('Код ошибки:', err.code);
+    console.error('Стек вызовов:', err.stack);
     res.status(500).json({ error: 'Ошибка запроса' });
   }
 });
 
 // Сохранение информации о поставке в базе данных SaveDataAboutDelivery
-app.post('/SaveDataKyzToDB', async (req, res) => {
-  const { date, delivery, quantity } = req.body;
+// app.post('/SaveDataKyzToDB', async (req, res) => {
+//   const { date, delivery, quantity } = req.body;
 
-  // Валидация входных данных
-  if (!date || typeof delivery !== 'string' || typeof quantity !== 'number') {
-    return res.status(400).json({ error: 'Некорректные входные данные' });
-  }
+//   // Валидация входных данных
+//   if (!date || typeof delivery !== 'string' || typeof quantity !== 'number') {
+//     return res.status(400).json({ error: 'Некорректные входные данные' });
+//   }
 
-  try {
-    const query = `
-            INSERT INTO DeliveryData (date, delivery, quantity) 
-            VALUES (?, ?, ?)
-        `;
-    const [result] = await pool.execute(query, [date, delivery, quantity]);
+//   try {
+//     const query = `
+//             INSERT INTO DeliveryData (date, delivery, quantity) 
+//             VALUES (?, ?, ?)
+//         `;
+//     const [result] = await pool.execute(query, [date, delivery, quantity]);
 
-    res.status(200).json({ message: 'Data added successfully', id: result.insertId });
-  } catch (err) {
-    console.error('Ошибка при выполнении запроса:', err.message);
-    res.status(500).json({ error: 'Ошибка при выполнении запроса' });
-  }
-});
+//     res.status(200).json({ message: 'Data added successfully', id: result.insertId });
+//   } catch (err) {
+//     console.error('Ошибка при выполнении запроса:', err.message);
+//     res.status(500).json({ error: 'Ошибка при выполнении запроса' });
+//   }
+// });
 
 // Обновление статуса киза
 app.put('/kyzUpdateStatus', async (req, res) => {
-  const { model, brand, crypto, dateNow } = req.body;
+  const { model, brand, crypto, dateNow, size } = req.body;
 
   // Валидация входных данных
-  if (!crypto || !dateNow || !model || !brand) {
+  if (!crypto || !dateNow || !model || !brand || !size) {
     return res.status(400).json({ error: 'Некорректные входные данные' });
   }
 
   try {
     // Получение имени таблицы
-    const tableName = await getCategoryByModel(model, brand);
-
+    const tableName = await getCategoryByModel(model, brand, size);
     // Формирование запроса с использованием параметризации
     const query = `
-            UPDATE ?? 
-            SET Status = 'Used', created_at = ? 
-            WHERE crypto = ?
+            UPDATE ${tableName} SET Status = 'Used', Date = ? 
+            WHERE Crypto = ?
         `;
-    const [result] = await pool.execute(query, [tableName, dateNow, crypto]);
+    const [result] = await pool.execute(query, [dateNow, crypto]);
 
     // Проверка, были ли затронуты строки
     if (result.affectedRows === 0) {
@@ -637,7 +658,7 @@ app.get('/getWbSizeBest26', async (req, res) => {
 });
 
 // Получить размер для Bestshoes
-app.get('/getWbSizeBestshoes', async (req, res) => {
+app.get('/getWbSizeBestShoes', async (req, res) => {
   const skus = req.query.skus;
 
   // Проверяем, что SKU передан в запросе
@@ -649,7 +670,7 @@ app.get('/getWbSizeBestshoes', async (req, res) => {
     // Выполняем запрос к базе данных
     const [rows] = await pool.execute(
       'SELECT size FROM products WHERE company_name = ? AND sku = ?',
-      ['Bestshoes', skus]
+      ['BestShoes', skus]
     );
 
     // Если размер найден, формируем ответ
@@ -661,7 +682,7 @@ app.get('/getWbSizeBestshoes', async (req, res) => {
     // Если размер не найден
     res.status(404).send('Размер не найден');
   } catch (error) {
-    console.error(`Ошибка при выполнении запроса для Bestshoes SKU ${skus}:`, error.message);
+    console.error(`Ошибка при выполнении запроса для BestShoes SKU ${skus}:`, error.message);
     res.status(500).send('Ошибка сервера');
   }
 });

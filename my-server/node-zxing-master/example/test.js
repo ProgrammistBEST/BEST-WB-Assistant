@@ -30,7 +30,7 @@ const SQL_UPDATE_FULLLINE = `UPDATE lines SET fullline = ? WHERE line = ?`;
 // Функция для получения параметров обрезки в зависимости от бренда
 function getCropOptions(brandData) {
   const cropOptionsMap = {
-    Bestshoes: { cropBox: { x: 85, y: 35, width: 80, height: 80 }, cropArea: { left: 400, top: 50, width: 600, height: 480 } },
+    BestShoes: { cropBox: { x: 85, y: 35, width: 80, height: 80 }, cropArea: { left: 400, top: 50, width: 600, height: 480 } },
     Armbest: { cropBox: { x: 50, y: 0, width: 80, height: 80 }, cropArea: { left: 50, top: 0, width: 500, height: 450 } },
     Best26: { cropBox: { x: 50, y: 0, width: 80, height: 80 }, cropArea: { left: 50, top: 0, width: 500, height: 450 } },
   };
@@ -62,7 +62,7 @@ async function cropPDFPages(pdfBytes, brandData, signal) {
 
     const pages = pdfDoc.getPages();
     pages.forEach((page) => {
-      if (brandData === 'Bestshoes') {
+      if (brandData === 'BestShoes') {
         drawWhiteRectangles(page, { x: 0, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });
       } else {
         drawWhiteRectangles(page, { x: 85, y: 0, width: 80, height: 150 }, { x: 0, y: 0, width: 160, height: 36 });

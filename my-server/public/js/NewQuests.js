@@ -700,7 +700,7 @@ function createContainerForBox(article, items, a) {
   else if (statusProgram.brand == 'Best26') {
     container.style.backgroundColor = 'rgb(169 169 220)'
   }
-  else if (statusProgram.brand == 'Bestshoes') {
+  else if (statusProgram.brand == 'BestShoes') {
     container.style.backgroundColor = '#C4E5FF'
   }
 

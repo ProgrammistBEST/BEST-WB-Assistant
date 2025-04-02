@@ -12,7 +12,7 @@ let statusProgramLoad = JSON.parse(statusProgramSS);
             token = await getApiById(3, 'Armbest', 'WB');
         } else if (statusProgramLoadApp.brand === 'Best26') {
             token = await getApiById(9, 'Best26', 'WB');
-        } else if (statusProgramLoadApp.brand === 'Bestshoes') {
+        } else if (statusProgramLoadApp.brand === 'BestShoes') {
             token = await getApiById(6, 'Bestshoes', 'WB');
         }
     } catch (error) {
@@ -41,7 +41,7 @@ function AddNewBoxButton() {
     else if (statusProgram.brand == 'Best26') {
         container.style.backgroundColor = 'rgb(169 169 220)'
     }
-    else if (statusProgram.brand == 'Bestshoes') {
+    else if (statusProgram.brand == 'BestShoes') {
         container.style.backgroundColor = '#C4E5FF'
     }
 
@@ -63,7 +63,7 @@ function AddNewBoxButton() {
     else if (prodBrand == 'Best26') {
         PreNumberBox = '5'
     }
-    else if (prodBrand == 'Bestshoes') {
+    else if (prodBrand == 'BestShoes') {
         PreNumberBox = '3'
     }
     if (date < 10) {
@@ -356,7 +356,7 @@ function Sendfordelivery() {
     else if (prodBrand == 'Best26') {
         PreNumberBox = '5'
     }
-    else if (prodBrand == 'Bestshoes') {
+    else if (prodBrand == 'BestShoes') {
         PreNumberBox = '3'
     }
     if (date < 10) {
@@ -508,7 +508,7 @@ function addKyzForModelsToDilivery() {
             if (brand == 'Best26') {
                 modelInfo.model = modelElement.textContent.replace(/[.]/g, '');
             } else {
-                modelInfo.model = 'Multimodel'
+                modelInfo.model = 'ЭВА'
             }
             Models.push(modelInfo);
         }

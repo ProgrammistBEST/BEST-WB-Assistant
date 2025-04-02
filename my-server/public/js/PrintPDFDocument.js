@@ -69,13 +69,13 @@ function get_article(code) {
     return [code];
 }
 
-function kyzUpdateStatus(article, brand, line, dateNow) {
+function kyzUpdateStatus(article, brand, line, dateNow, kyzSize) {
     fetch('/kyzUpdateStatus', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({model: article, brand: brand, line: line, dateNow }),
+        body: JSON.stringify({ model: article, brand: brand, crypto: line, dateNow, size: kyzSize }),
     })
         .then(response => response.json())
         .catch((error) => {
@@ -455,7 +455,7 @@ async function finishDocument(choosedVariant) {
             if (fileBrand == 'Best26') {
                 url = `/download?fileBrand=${encodeURIComponent('EVA')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
-            else if (fileBrand == 'Bestshoes') {
+            else if (fileBrand == 'BestShoes') {
                 url = `/download?fileBrand=${encodeURIComponent('BEST')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
             else if (fileBrand == 'Armbest') {
@@ -497,6 +497,13 @@ async function finishDocument(choosedVariant) {
             if (choosedVariant == 7) {
                 return
             }
+            let articleForFetch;
+            if (statusProgram.brand == 'Best26') {
+                articleForFetch = orderItem.orderArtikul;
+            } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes') {
+                articleForFetch = 'ЭВА';
+            }
+
             try {
                 const responsePDF = await fetch('/getCryptoToFinishDocument', {
                     method: 'POST',
@@ -506,9 +513,20 @@ async function finishDocument(choosedVariant) {
                     body: JSON.stringify({
                         kyz: orderItem.orderKyz,
                         size: orderItem.orderSize,
-                        brand: statusProgram.brand
+                        brand: statusProgram.brand,
+                        model: articleForFetch // Убедитесь, что передается поле "model"
                     })
                 });
+
+                // ЛОГ: Ответ от сервера
+                console.log('Ответ от сервера:', responsePDF);
+
+                // Проверка статуса ответа
+                if (!responsePDF.ok) {
+                    console.error('Ошибка при получении PDF:', responsePDF.statusText);
+                } else {
+                    console.log('PDF успешно получен.');
+                }
                 if (!responsePDF.ok) {
                     throw new Error(`Ошибка загрузки PDF: ${responsePDF.statusText}`);
                 }
@@ -538,7 +556,7 @@ async function finishDocument(choosedVariant) {
                     imgKYZ.src = imageUrl;
                     canvas.remove()
                     doc.addImage(imagesKYZPDF, 'JPEG', 0, 0, 58, 40, null, 'FAST');
-                    if (statusProgramLoadPrintPDFDOC.brand == 'Bestshoes') {
+                    if (statusProgramLoadPrintPDFDOC.brand == 'BestShoes') {
                         doc.setFillColor(255, 255, 255);
                         doc.rect(2, 2, 28, 25, 'F');
                         if (article.length > 7) {
@@ -744,8 +762,18 @@ async function finishDocument(choosedVariant) {
     document.querySelectorAll('.sectionForAcceptDeliveryold .Boxtransferredfordelivery li.didItem').forEach(item => {
         item.id += `did${Math.random()}`;
         let kyzline = item.querySelector('.kyzArea').textContent
+        let article = item.querySelector('.headerLabelForModel').textContent
         let kyzSize = item.querySelector('.Size').textContent
-        kyzUpdateStatus(article, brand, kyzline, dateNow)
+        console.log('ХУЙ 3 ', article, statusProgram.brand, kyzline, dateNow, kyzSize);
+
+        let articleForFetch;
+        if (statusProgram.brand == 'Best26') {
+            articleForFetch = article;
+        } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes') {
+            articleForFetch = 'ЭВА';
+        }
+
+        kyzUpdateStatus(articleForFetch, statusProgram.brand, kyzline, dateNow, kyzSize);
     })
 
     let boxNumberForDB = 0
@@ -763,9 +791,9 @@ async function finishDocument(choosedVariant) {
         quantity: boxNumberForDB
     }
 
-    if (choosedVariant != 7) {
-        saveDataKyzToDB(dataToKyzDB)
-    }
+    // if (choosedVariant != 7) {
+    //     saveDataKyzToDB(dataToKyzDB)
+    // }
 
     console.timeEnd('finishDocument')
     const endTime = Date.now();

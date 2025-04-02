@@ -147,7 +147,7 @@ function button_deleteModelDB(vendorcode, wbsize, pair) {
     })
 }
 
-// функция добавления модели!!!
+// функция добавления модели
 function button_addNewModelDB() {
     let pair;
 
@@ -434,7 +434,7 @@ function buttonforCounterBoxAndItems() {
             boxescountInPanelBEST26++;
 
         }
-        else if (box.classList.contains('Bestshoes')) {
+        else if (box.classList.contains('BestShoes')) {
             PreNumberBox = '3'
             if (date < 10) {
                 date = '0' + date;
@@ -459,7 +459,7 @@ function buttonforCounterBoxAndItems() {
             else if (box.classList.contains('Best26') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST26++
             }
-            else if (box.classList.contains('Bestshoes') && box.classList.contains(statusProgram.NameDelivery)) {
+            else if (box.classList.contains('BestShoes') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST++
             }
             if (!acc[article]) {
@@ -489,7 +489,7 @@ function buttonforCounterBoxAndItems() {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST26
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST26
     }
-    else if (statusProgram.brand == 'Bestshoes') {
+    else if (statusProgram.brand == 'BestShoes') {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST
     }
