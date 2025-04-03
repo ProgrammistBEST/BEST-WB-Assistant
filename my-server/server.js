@@ -6,17 +6,13 @@ const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 3000;
 const fs = require('fs');
-const multer = require('multer');
 require('mysql2/promise');
+
 // Подключение к бд
 const { pool, userPool } = require('./connectDB.js'); // Импортируем пулы из connect.js
 
 // Получение честного знака из таблицы
 const { getCategoryByModel } = require('./config/articles.js')
-
-// Конфигурация multer для обработки загрузки файлов
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 // Обслуживание статических файлов
 app.use(express.static(path.join(__dirname, 'public')));
@@ -84,7 +80,7 @@ function getFilesRecursively(directory) {
 }
 
 // Эндпоинт для получения API-токена по ID
-app.get('/getApiById', async (req, res) => {
+app.get('/api/getApiById', async (req, res) => {
   const { id, company_name, category } = req.query; // Извлечение параметров запроса
 
   try {
@@ -168,7 +164,6 @@ app.get('/kyz', async (req, res) => {
   try {
     // Получаем имя таблицы
     const tableName = await getCategoryByModel(model, brand, size);
-    // console.log(`Имя таблицы: ${tableName}`);
 
     // Проверка имени таблицы
     if (!tableName || typeof tableName !== 'string') {

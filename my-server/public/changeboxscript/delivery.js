@@ -488,143 +488,128 @@ function PressButtonDeliveryPost() {
     }
 }
 
-function addKyzForModelsToDilivery() {
-    // Получаем размеры из элементов с классом 'sizeElement'
-
-    const brand = statusProgram.brand;
-    let Models = [];
-
-    document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element, index) => {
-        const modelInfo = {};
-
-        let modelElement = element.querySelector('h5.headerLabelForModel');
-        let sizeElement = element.querySelector('.Size');
+// Функция для получения данных о моделях
+function getModelData(brand) {
+    const models = [];
+    document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element) => {
+        const modelElement = element.querySelector('h5.headerLabelForModel');
+        const sizeElement = element.querySelector('.Size');
 
         if (modelElement && sizeElement) {
-            modelElement.textContent.replace(/[.чЧ]/g, '');
-            modelInfo.model = modelElement.textContent;
-            modelInfo.size = sizeElement.textContent;
+            const model = brand === 'Best26'
+                ? modelElement.textContent.replace(/[.]/g, '')
+                : 'ЭВА';
 
-            if (brand == 'Best26') {
-                modelInfo.model = modelElement.textContent.replace(/[.]/g, '');
-            } else {
-                modelInfo.model = 'ЭВА'
-            }
-            Models.push(modelInfo);
-        }
-    })
-
-    // Создаём массив промисов для всех запросов
-    const fetchPromises = Models.map(modelInfo => fetch(`/kyz?size=${modelInfo.size}&brand=${brand}&model=${modelInfo.model}`, { method: 'GET' })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Ошибка сети: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(data)
-            return { size: modelInfo.size, model: modelInfo.model, kyzElements: data.data };
-        })
-        .catch(error => {
-            console.error('Error fetching kyz elements:', error);
-            return { size: modelInfo.size, model: modelInfo.model, kyzElements: [] }; // Возвращаем пустой массив в случае ошибки
-        })
-    );
-
-    // Выполняем все запросы
-    Promise.all(fetchPromises).then(results => {
-        if (statusProgram.brand == 'Best26') {
-            results.forEach(({ model, kyzElements }) => {
-                console.log(model, kyzElements)
-                // Обновляем элементы на странице
-                document.querySelectorAll(`.sectionForAcceptDeliverynew li[article-numb="${model}"]`).forEach((element, index) => {
-                    let modelElement = element.querySelector('h5.headerLabelForModel').textContent;
-                    let sizeElement = element.querySelector('.Size');
-                    if (kyzElements[index] && modelElement && modelElement == kyzElements[index].Model && sizeElement.textContent == kyzElements[index].Size) {
-                        element.querySelector('.kyzArea').textContent = kyzElements[index].Crypto;
-                        // element.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
-                    }
-                });
-            });
-        } else {
-            results.forEach(({ size, kyzElements }) => {
-                // Обновляем элементы на странице
-                document.querySelectorAll(`.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`).forEach((element, index) => {
-                    if (kyzElements[index]) {
-                        element.textContent = kyzElements[index].Crypto;
-                        element.parentElement.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
-                    }
-                });
+            models.push({
+                model,
+                size: sizeElement.textContent,
             });
         }
+    });
+    return models;
+}
 
-        document.querySelectorAll('.sectionForAcceptDeliverynew .Boxtransferredfordelivery').forEach(box => {
-            if (box.closest('article')) { return; }
-            if (box.classList.contains('firstStock') && box.classList.contains('Утро')) {
-                document.querySelector('.morningstockes .firstStock').appendChild(box);
-            } else if (box.classList.contains('secondStock') && box.classList.contains('Утро')) {
-                document.querySelector('.morningstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Утро')) {
-                document.querySelector('.morningstockes .thirdStock').appendChild(box);
-            }
+// Функция для выполнения HTTP-запросов
+async function fetchKyzElements(modelInfo, brand) {
+    try {
+        const response = await fetch(`/kyz?size=${modelInfo.size}&brand=${brand}&model=${modelInfo.model}`, { method: 'GET' });
+        if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
+        const data = await response.json();
+        return { size: modelInfo.size, model: modelInfo.model, kyzElements: data.data };
+    } catch (error) {
+        console.error('Error fetching kyz elements:', error);
+        return { size: modelInfo.size, model: modelInfo.model, kyzElements: [] };
+    }
+}
 
-            if (box.classList.contains('firstStock') && box.classList.contains('Вечер')) {
-                document.querySelector('.eveningstockes .firstStock').appendChild(box);
-            } else if (box.classList.contains('secondStock') && box.classList.contains('Вечер')) {
-                document.querySelector('.eveningstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Вечер')) {
-                document.querySelector('.eveningstockes .thirdStock').appendChild(box);
-            }
-
-            if (box.classList.contains('firstStock') && box.classList.contains('Остатки')) {
-                document.querySelector('.leftoversstockes .firstStock').appendChild(box);
-            } else if (box.classList.contains('secondStock') && box.classList.contains('Остатки')) {
-                document.querySelector('.leftoversstockes .secondStock').appendChild(box);
-            } else if (box.classList.contains('thirdStock') && box.classList.contains('Остатки')) {
-                document.querySelector('.leftoversstockes .thirdStock').appendChild(box);
+// Функция для обновления DOM для бренда Best26
+function updateDOMForBest26(results) {
+    results.forEach(({ model, kyzElements }) => {
+        document.querySelectorAll(`.sectionForAcceptDeliverynew li[article-numb="${model}"]`).forEach((element, index) => {
+            const modelElement = element.querySelector('h5.headerLabelForModel').textContent;
+            const sizeElement = element.querySelector('.Size');
+            if (kyzElements[index] && modelElement === kyzElements[index].Model && sizeElement.textContent === kyzElements[index].Size) {
+                element.querySelector('.kyzArea').textContent = kyzElements[index].Crypto;
             }
         });
-
-        document.querySelectorAll('.stockes .Boxtransferredfordelivery .transferredfordelivery').forEach(box => {
-            if (box.querySelector('.StockAreaHide').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Не указан склад")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('h5.headerLabelForModel').textContent == '') {
-                alert('Ошибка.' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует артикул")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('p.Size').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует размер")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.stickerArea').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует стикер")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.kyzArea').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует КИЗ")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.createAt').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует время создания")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.colorArea').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует цвет")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.skusArea').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует баркод")
-                box.style.backgroundColor = 'red'
-            }
-            if (box.querySelector('.nmId').textContent == '') {
-                alert('Ошибка с Артикулом №' + box.querySelector('h5.headerLabelForModel').textContent + " Отсутствует номер заказа")
-                box.style.backgroundColor = 'red'
-            }
-        })
     });
+}
+
+// Функция для обновления DOM для других брендов
+function updateDOMForOtherBrands(results) {
+    results.forEach(({ size, kyzElements }) => {
+        document.querySelectorAll(`.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`).forEach((element, index) => {
+            if (kyzElements[index]) {
+                element.textContent = kyzElements[index].Crypto;
+                element.parentElement.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
+            }
+        });
+    });
+}
+
+// Функция для перемещения элементов между складами
+function moveBoxesToStocks() {
+    document.querySelectorAll('.sectionForAcceptDeliverynew .Boxtransferredfordelivery').forEach((box) => {
+        if (box.closest('article')) return;
+
+        const stockSelectors = {
+            Утро: '.morningstockes',
+            Вечер: '.eveningstockes',
+            Остатки: '.leftoversstockes',
+        };
+
+        Object.entries(stockSelectors).forEach(([time, selector]) => {
+            if (box.classList.contains(time)) {
+                ['firstStock', 'secondStock', 'thirdStock'].forEach((stock) => {
+                    if (box.classList.contains(stock)) {
+                        document.querySelector(`${selector} .${stock}`).appendChild(box);
+                    }
+                });
+            }
+        });
+    });
+}
+
+// Функция для проверки корректности данных
+function validateBoxes() {
+    document.querySelectorAll('.stockes .Boxtransferredfordelivery .transferredfordelivery').forEach((box) => {
+        const fields = [
+            { selector: '.StockAreaHide', message: 'Не указан склад' },
+            { selector: 'h5.headerLabelForModel', message: 'Отсутствует артикул' },
+            { selector: 'p.Size', message: 'Отсутствует размер' },
+            { selector: '.stickerArea', message: 'Отсутствует стикер' },
+            { selector: '.kyzArea', message: 'Отсутствует КИЗ' },
+            { selector: '.createAt', message: 'Отсутствует время создания' },
+            { selector: '.colorArea', message: 'Отсутствует цвет' },
+            { selector: '.skusArea', message: 'Отсутствует баркод' },
+            { selector: '.nmId', message: 'Отсутствует номер заказа' },
+        ];
+
+        fields.forEach(({ selector, message }) => {
+            if (!box.querySelector(selector)?.textContent.trim()) {
+                alert(`Ошибка с Артикулом №${box.querySelector('h5.headerLabelForModel')?.textContent}: ${message}`);
+                box.style.backgroundColor = 'red';
+            }
+        });
+    });
+}
+
+// Главная функция
+async function addKyzForModelsToDilivery() {
+    const brand = statusProgram.brand;
+    const models = getModelData(brand);
+
+    const fetchPromises = models.map((modelInfo) => fetchKyzElements(modelInfo, brand));
+    const results = await Promise.all(fetchPromises);
+
+    if (brand === 'Best26') {
+        updateDOMForBest26(results);
+    } else {
+        updateDOMForOtherBrands(results);
+    }
+
+    moveBoxesToStocks();
+    validateBoxes();
 }
 
 document.getElementById('approvedelivery').addEventListener("click", addKyzForModelsToDilivery);

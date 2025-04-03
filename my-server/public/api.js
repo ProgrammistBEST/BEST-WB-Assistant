@@ -2,7 +2,7 @@
 const getApiById = async (id, company_name, category) => {
     try {
       const response = await fetch(
-        `http://${window.location.hostname}:3000/getApiById?id=${id}&company_name=${company_name}&category=${category}`
+        `http://${window.location.hostname}:3000/api/getApiById?id=${id}&company_name=${company_name}&category=${category}`
       );
   
       if (!response.ok) {
