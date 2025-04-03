@@ -1,4 +1,3 @@
-const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 
 // Путь к вашему JSON файлу
@@ -81,9 +80,6 @@ async function main() {
     try {
         // Чтение данных из JSON файла
         const data = await readJsonFile(jsonFilePath);
-
-        // Подключение к базе данных SQLite
-        const db = new sqlite3.Database('productsBestshoes.db');
 
         // Создание таблицы
         await createTable(db);

@@ -8,10 +8,10 @@ async function getCategoryByModel(model, brand, size) {
         const normalizedBrand = brand.trim().toLowerCase();
         const normalizedSize = size;
 
-        console.log(`Обработка модели: ${normalizedModel}, бренда: ${normalizedBrand}, размера: ${normalizedSize}`);
+        // console.log(`Обработка модели: ${normalizedModel}, бренда: ${normalizedBrand}, размера: ${normalizedSize}`);
         if (model == 'ЭВА') {
             model = size.charAt(0);
-            console.log('model: ', model);
+            // console.log('model: ', model);
 
             let tableName;
             if (model == '2') {
@@ -21,7 +21,7 @@ async function getCategoryByModel(model, brand, size) {
             } else if (model == '4') {
                 tableName = `${normalizedBrand}_general_4`;
             }
-            console.log(`Таблица для Multimodel определена как: ${tableName}`);
+            // console.log(`Таблица для Multimodel определена как: ${tableName}`);
 
             return tableName;
         }

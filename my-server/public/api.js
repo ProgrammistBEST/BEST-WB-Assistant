@@ -22,4 +22,4 @@ const getApiById = async (id, company_name, category) => {
       console.error('Ошибка выполнения getApiById:', err.message);
       throw err; // Повторно выбрасываем ошибку для обработки выше
     }
-  };
+};

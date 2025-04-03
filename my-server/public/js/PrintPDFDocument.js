@@ -1,5 +1,3 @@
-// const { error } = require("pdf-lib");
-
 let statusProgramPrintPDFDOC = localStorage.getItem('statusProgram');
 let statusProgramLoadPrintPDFDOC = JSON.parse(statusProgramPrintPDFDOC);
 let date = new Date()

@@ -364,6 +364,7 @@ label:hover {
 .MaxchangeVariantForZIP {
     font-size: 0.9vh;
 }
+
 .aside {
     position: fixed;
     bottom: 20px;
@@ -377,6 +378,7 @@ label:hover {
     z-index: 1000;
 }
 .aside.open {
+    padding-bottom: 15px;
     transform: translateY(0);
 }
 .side-panel {
