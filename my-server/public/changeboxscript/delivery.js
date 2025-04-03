@@ -501,13 +501,10 @@ function addKyzForModelsToDilivery() {
         let sizeElement = element.querySelector('.Size');
 
         if (modelElement && sizeElement) {
-            modelElement.textContent.replace(/[.чЧ]/g, '');
             modelInfo.model = modelElement.textContent;
             modelInfo.size = sizeElement.textContent;
-
-            if (brand == 'Best26') {
-                modelInfo.model = modelElement.textContent.replace(/[.]/g, '');
-            } else {
+            console.log('Model info', modelInfo.model)
+            if (brand !== "Best26") {
                 modelInfo.model = 'ЭВА'
             }
             Models.push(modelInfo);
