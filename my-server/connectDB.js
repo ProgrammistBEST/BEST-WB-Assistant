@@ -31,7 +31,7 @@ pool.getConnection()
 // Проверка подключения к базе данных bestserver
 userPool.getConnection()
     .then((connection) => {
-        console.log('Успешное подключение к базе данных MySQL: bestserver');
+        console.log('connectdb - Успешное подключение к базе данных MySQL: bestserver');
         connection.release();
     })
     .catch((err) => {

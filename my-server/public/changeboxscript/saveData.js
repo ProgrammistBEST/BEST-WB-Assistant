@@ -35,8 +35,7 @@ function saveData() {
         const SectionForSaveNameDelivery = statusProgram.NameDelivery;
         let orders = {};
 
-        // Собираем данные о заказах
-        document.querySelectorAll('.sectionForAcceptDeliveryold, .sectionForAcceptDeliverynew').forEach(section => {
+        document.querySelectorAll('.sectionForAcceptDeliveryold').forEach(section => {
             section.querySelectorAll('li').forEach((item, index) => {
                 const Artorder = item.querySelector('h5').textContent;
                 const createAt = item.querySelector('p.createAt').textContent;
@@ -51,94 +50,64 @@ function saveData() {
             });
         });
 
-        // Собираем данные о ЧЗ для продления резервирования
-        const cryptoData = [];
-        document.querySelectorAll('.sectionForAcceptDeliverynew .Boxtransferredfordelivery').forEach(box => {
-            const crypto = box.querySelector('.kyzArea').textContent;
-            const size = box.querySelector('.Size').textContent;
-            const model = box.querySelector('h5.headerLabelForModel').textContent;
-            const brand = statusProgram.brand;
-            console.log("Полученные данные для резервирования", crypto, size, model, brand)
-            if (crypto && size && model && brand) {
-                cryptoData.push({ crypto, size, brand, model });
-            }
+        document.querySelectorAll('.sectionForAcceptDeliverynew').forEach(section => {
+            section.querySelectorAll('li').forEach((item, index) => {
+                const Artorder = item.querySelector('h5').textContent;
+                const createAt = item.querySelector('p.createAt').textContent;
+                const nmId = item.querySelector('p.nmId').textContent;
+                const skusArea = item.querySelector('p.skusArea').textContent;
+                orders[index] = {
+                    article: Artorder,
+                    createdAt: createAt,
+                    nmId: nmId,
+                    skus: [skusArea]
+                };
+            });
         });
 
-        // Продляем резервирование ЧЗ на сервере
-        fetch('/extendReservation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                crypto: "(01)04630220301432(21)5W=.No*Y_Wp'E",
-                size: "47-48",
-                brand: "Armbest",
-                model: "ЭВА"
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Ошибка сети: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Ответ от сервера:", data);
-        })
-        .catch(error => {
-            console.error('Ошибка при продлении резервирования:', error);
-        });
+        const compressedOldSection = LZString.compress(oldSection);
+        const compressedNewSection = LZString.compress(newSection);
+        const compressedleftoverssection = LZString.compress(leftoverssection);
+        const compressedOrders = LZString.compress(JSON.stringify(orders));
+        const VariableSaveNameDelivery = LZString.compress(SectionForSaveNameDelivery);
 
-        // Ждем завершения всех запросов на продление резервирования
-        Promise.all(extendReservationPromises).then(() => {
-            console.log('Резервирование успешно продлено для всех ЧЗ.');
+        sectionsStore.put({ name: 'oldDeliveryData', data: compressedOldSection });
+        sectionsStore.put({ name: 'newDeliveryData', data: compressedNewSection });
+        sectionsStore.put({ name: 'leftoverssection', data: compressedleftoverssection });
+        sectionsStore.put({ name: 'SaveNameDelivery', data: VariableSaveNameDelivery });
+        ordersStore.put({ id: 'NewOrders', data: compressedOrders });
 
-            // Сохраняем данные в IndexedDB
-            const compressedOldSection = LZString.compress(oldSection);
-            const compressedNewSection = LZString.compress(newSection);
-            const compressedleftoverssection = LZString.compress(leftoverssection);
-            const compressedOrders = LZString.compress(JSON.stringify(orders));
-            const VariableSaveNameDelivery = LZString.compress(SectionForSaveNameDelivery);
+        transaction.oncomplete = () => {
+            console.log('Данные успешно сохранены.');
+            showModal = 'Данные успешно сохранены.';
+        };
 
-            sectionsStore.put({ name: 'oldDeliveryData', data: compressedOldSection });
-            sectionsStore.put({ name: 'newDeliveryData', data: compressedNewSection });
-            sectionsStore.put({ name: 'leftoverssection', data: compressedleftoverssection });
-            sectionsStore.put({ name: 'SaveNameDelivery', data: VariableSaveNameDelivery });
-            ordersStore.put({ id: 'NewOrders', data: compressedOrders });
-
-            transaction.oncomplete = () => {
-                console.log('Данные успешно сохранены.');
-                showModal = 'Данные успешно сохранены.';
-            };
-
-            transaction.onerror = (event) => {
-                console.error('Ошибка при сохранении данных в IndexedDB', event);
-                showModal = 'Ошибка при сохранении данных: ' + event;
-            };
-
-            // Показываем сообщение об успешном сохранении
-            document.getElementById('success-message').style.display = 'flex';
+        transaction.onerror = (event) => {
+            console.error('Ошибка при сохранении данных в IndexedDB', event);
+            showModal = 'Ошибка при сохранении данных: ' + event;
+        };
+        
+        document.getElementById('success-message').style.display = 'flex'
+    
+        setTimeout(() => {
+            document.querySelector('body').style.overflow = 'hidden';
+            let messageText = document.querySelector('.text-message');
+            messageText.textContent = showModal;
+            document.getElementById('success-message').style.opacity= 1
 
             setTimeout(() => {
-                document.querySelector('body').style.overflow = 'hidden';
-                let messageText = document.querySelector('.text-message');
-                messageText.textContent = showModal;
-                document.getElementById('success-message').style.opacity = 1;
-
+                document.querySelector('.message').style.transform = "translate(220px)"
+                document.getElementById('success-message').style.opacity= 0
                 setTimeout(() => {
-                    document.querySelector('.message').style.transform = "translate(220px)";
-                    document.getElementById('success-message').style.opacity = 0;
-                    setTimeout(() => {
-                        document.getElementById('success-message').style.display = 'none';
-                        document.querySelector('.message').style.transform = "translate(0px)";
-                        document.querySelector('body').style.overflow = '';
-                    }, 1000);
-                }, 2000);
-            }, 1);
-        }).catch(error => {
-            console.error('Не удалось продлить резервирование ЧЗ:', error);
-        });
+                    document.getElementById('success-message').style.display = 'none'
+                    document.querySelector('.message').style.transform = "translate(0px)"
+                    document.querySelector('body').style.overflow = '';
+                }, 1000);
+            }, 2000);
+        }, 1);
+    
     }).catch((error) => {
-        console.error('Ошибка при открытии базы данных:', error);
+        console.error(error);
     });
 }
 

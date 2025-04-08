@@ -10,35 +10,47 @@ function OpenuntileHonestSignModal() {
 async function untileHonestSignYes() {
   ModalAcceptMessage.style.opacity = "0";
   setTimeout(() => {
-    ModalAcceptMessage.style.display = "none";
+      ModalAcceptMessage.style.display = "none";
   }, 500);
 
   document.querySelectorAll(".UlForAreaLeftovers li").forEach((kyzItem) => {
-    let linekyz = kyzItem.querySelector(".kyzArea").textContent;
-    let lineSize = kyzItem.querySelector(".Size").textContent;
-    let lineBrand = kyzItem.querySelector(".brandAreaHide").textContent;
+      const kyzArea = kyzItem.querySelector(".kyzArea");
+      const linekyz = kyzArea.textContent;
+      const lineSize = kyzItem.querySelector(".Size").textContent;
+      const lineBrand = kyzItem.querySelector(".brandAreaHide").textContent;
 
-    const data = {
-      line: linekyz,
-      size: lineSize,
-      brand: lineBrand,
-    };
+      // Извлекаем tableName и id из атрибутов DOM
+      const tableName = kyzArea.getAttribute("data-table-name");
+      const id = kyzArea.getAttribute("data-id");
 
-    fetch("/kyzComeback", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Success:", data);
-        kyzItem.remove();
+      if (!tableName || !id) {
+          console.error("Ошибка: Отсутствуют tableName или id для записи:", linekyz);
+          return;
+      }
+
+      const data = {
+          tableName,
+          id,
+          line: linekyz,
+          size: lineSize,
+          brand: lineBrand,
+      };
+
+      fetch('/kyzComeback', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ tableName, id }), // Передаем только tableName и id
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+          .then(response => response.json())
+          .then(data => {
+              console.log('Success:', data);
+              kyzItem.remove(); // Удаляем элемент из DOM после успешного запроса
+          })
+          .catch(error => {
+              console.error('Error:', error);
+          });
   });
 }
 

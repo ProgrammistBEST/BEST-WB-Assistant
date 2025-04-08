@@ -3,68 +3,70 @@ const { pool } = require('../connectDB');
 // Функция для получения имени таблицы по модели и бренду
 async function getCategoryByModel(model, brand, size) {
     try {
-        // Нормализация входных данных
-        const normalizedModel = model.split(/[-/]/)[0].trim().toLowerCase();
-        const normalizedBrand = brand.trim().toLowerCase();
-        const normalizedSize = size;
+        // 1. Нормализация данных
+        const normalizedParams = normalizeInputData(model, brand, size);
+        const { normalizedModel, normalizedBrand, normalizedSize } = normalizedParams;
 
-        // console.log(`Обработка модели: ${normalizedModel}, бренда: ${normalizedBrand}, размера: ${normalizedSize}`);
-        if (model == 'ЭВА') {
-            model = size.charAt(0);
-            // console.log('model: ', model);
-
-            let tableName;
-            if (model == '2') {
-                tableName = `${normalizedBrand}_general_2`;
-            } else if (model == '3') {
-                tableName = `${normalizedBrand}_general_3`;
-            } else if (model == '4') {
-                tableName = `${normalizedBrand}_general_4`;
-            }
-            // console.log(`Таблица для Multimodel определена как: ${tableName}`);
-
-            return tableName;
-        }
-        // // Обработка специального случая "Multimodel"
-        // if (normalizedModel === 'multimodel') {
-        //     console.log('Модель Multimodel обнаружена. Определяем категорию по размеру.');
-
-        //     let tableName;
-        //     if (/^2\d/.test(normalizedSize)) {
-        //         tableName = `${normalizedBrand}_general_2`;
-        //     } else if (/^3\d/.test(normalizedSize)) {
-        //         tableName = `${normalizedBrand}_general_3`;
-        //     } else if (/^4\d/.test(normalizedSize)) {
-        //         tableName = `${normalizedBrand}_general_4`;
-        //     } else {
-        //         throw new Error(`Не удалось определить категорию для размера: ${normalizedSize}`);
-        //     }
-
-        //     console.log(`Таблица для Multimodel определена как: ${tableName}`);
-        //     return tableName;
-        // }
-        // Выполнение SQL-запроса для получения категории
-        const [rows] = await pool.query(`
-            SELECT DISTINCT category 
-            FROM model_categories 
-            WHERE model = ?
-        `, [model]);
-
-        // Проверка, что запрос вернул результат
-        if (rows.length === 0) {
-            throw new Error(`Для модели '${normalizedModel}' категории не найдены.`);
+        // 2. Обработка специальной логики для модели "ЭВА"
+        if (normalizedModel === 'эва') {
+            return getTableNameForEva(normalizedBrand, normalizedSize);
         }
 
-        // Создание имени таблицы
-        const categories = rows.map(row => row.category); // Извлечение категорий
-        const tableMapping = `${normalizedBrand}_${categories.join('_')}`; // Формирование строки
+        // 3. Получение категории из базы данных
+        const categoryMapping = await fetchCategoryFromDatabase(normalizedModel);
 
-        console.log(`Определенная таблица: ${tableMapping}`);
-        return tableMapping;
+        // 4. Формирование имени таблицы
+        return `${normalizedBrand}_${categoryMapping}`;
     } catch (error) {
         console.error("Ошибка при получении категории из базы данных:", error.message);
         throw error; // Перебрасываем ошибку выше для обработки вызывающей стороной
     }
+}
+
+// Нормализация входных данных
+function normalizeInputData(model, brand, size) {
+    const normalizedModel = model.split(/[-/]/)[0].trim().toLowerCase();
+    const normalizedBrand = brand.trim().toLowerCase();
+    const normalizedSize = size.trim();
+
+    return { normalizedModel, normalizedBrand, normalizedSize };
+}
+
+// Обработка специальной логики для модели "ЭВА"
+function getTableNameForEva(brand, size) {
+    const firstCharOfSize = size.charAt(0);
+
+    let tableName;
+    switch (firstCharOfSize) {
+        case '2':
+            tableName = `${brand}_general_2`;
+            break;
+        case '3':
+            tableName = `${brand}_general_3`;
+            break;
+        case '4':
+            tableName = `${brand}_general_4`;
+            break;
+        default:
+            throw new Error(`Неподдерживаемый размер для модели ЭВА: ${size}`);
+    }
+
+    return tableName;
+}
+
+// Получение категории из базы данных
+async function fetchCategoryFromDatabase(model) {
+    const [rows] = await pool.query(`
+        SELECT DISTINCT category 
+        FROM model_categories 
+        WHERE model = ?
+    `, [model]);
+
+    if (rows.length === 0) {
+        throw new Error(`Для модели '${model}' категории не найдены.`);
+    }
+
+    return rows.map(row => row.category).join('_');
 }
 
 // Экспорт функции

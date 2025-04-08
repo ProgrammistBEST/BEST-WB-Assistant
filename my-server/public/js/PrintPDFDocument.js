@@ -67,17 +67,20 @@ function get_article(code) {
     return [code];
 }
 
-function kyzUpdateStatus(article, brand, line, dateNow, kyzSize) {
+function kyzUpdateStatus(id, tableName, dateNow) {
     fetch('/kyzUpdateStatus', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model: article, brand: brand, crypto: line, dateNow, size: kyzSize }),
+        body: JSON.stringify({ id, tableName, dateNow }),
     })
         .then(response => response.json())
+        .then(data => {
+            console.log('Статус успешно обновлен:', data.message);
+        })
         .catch((error) => {
-            console.error('Error:', error);
+            console.error('Ошибка при обновлении статуса:', error);
         });
 }
 
@@ -186,7 +189,9 @@ async function finishDocument(choosedVariant) {
                 stickerAreaorderId: order.querySelector('.stickerAreaorderId').textContent,
                 stickerAreapartA: order.querySelector('.stickerAreapartA').textContent,
                 stickerAreapartB: order.querySelector('.stickerAreapartB').textContent,
-            }
+                orderKyzId: order.querySelector('.kyzArea').getAttribute('data-id'), // Получаем data-id
+                orderKyzTableName: order.querySelector('.kyzArea').getAttribute('data-table-name') // Получаем data-table-name
+            };
             let fullKyzArea;
             if (order.querySelector('.FullkyzArea').textContent.length > 50) {
                 fullKyzArea = order.querySelector('.FullkyzArea').textContent
@@ -503,16 +508,16 @@ async function finishDocument(choosedVariant) {
             }
 
             try {
+                console.log(orderItem.orderKyzId, orderItem.orderKyzTableName, orderItem.orderKyz)
                 const responsePDF = await fetch('/getCryptoToFinishDocument', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        kyz: orderItem.orderKyz,
-                        size: orderItem.orderSize,
-                        brand: statusProgram.brand,
-                        model: articleForFetch // Убедитесь, что передается поле "model"
+                        id: orderItem.orderKyzId, // ID записи
+                        tableName: orderItem.orderKyzTableName, // Имя таблицы
+                        Crypto: orderItem.orderKyz // CryptoCode честного знака
                     })
                 });
 
@@ -759,20 +764,23 @@ async function finishDocument(choosedVariant) {
 
     document.querySelectorAll('.sectionForAcceptDeliveryold .Boxtransferredfordelivery li.didItem').forEach(item => {
         item.id += `did${Math.random()}`;
-        let kyzline = item.querySelector('.kyzArea').textContent
-        let article = item.querySelector('.headerLabelForModel').textContent
-        let kyzSize = item.querySelector('.Size').textContent
-        console.log('ХУЙ 3 ', article, statusProgram.brand, kyzline, dateNow, kyzSize);
-
+        let article = item.querySelector('.headerLabelForModel').textContent;
+    
+        // Определяем articleForFetch в зависимости от бренда
         let articleForFetch;
-        if (statusProgram.brand == 'Best26') {
+        if (statusProgram.brand === 'Best26') {
             articleForFetch = article;
-        } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes') {
+        } else if (statusProgram.brand === 'Armbest' || statusProgram.brand === 'BestShoes') {
             articleForFetch = 'ЭВА';
         }
-
-        kyzUpdateStatus(articleForFetch, statusProgram.brand, kyzline, dateNow, kyzSize);
-    })
+    
+        // Получаем id и tableName из data-атрибутов
+        const id = item.querySelector('.kyzArea').getAttribute('data-id');
+        const tableName = item.querySelector('.kyzArea').getAttribute('data-table-name');
+    
+        // Вызываем функцию обновления статуса
+        kyzUpdateStatus(id, tableName, dateNow);
+    });
 
     let boxNumberForDB = 0
     boxlist.forEach(box => {

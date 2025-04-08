@@ -515,36 +515,89 @@ async function fetchKyzElements(modelInfo, brand) {
         const response = await fetch(`/kyz?size=${modelInfo.size}&brand=${brand}&model=${modelInfo.model}`, { method: 'GET' });
         if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
         const data = await response.json();
-        return { size: modelInfo.size, model: modelInfo.model, kyzElements: data.data };
+
+        // Добавляем tableName и id к Crypto
+        return {
+            size: modelInfo.size,
+            model: modelInfo.model,
+            kyzElements: [
+                {
+                    Crypto: data.data.Crypto,
+                    id: data.data.id,
+                    tableName: data.data.tableName,
+                    Model: data.data.Model,
+                    Size: data.data.Size
+                }
+            ]
+        };
     } catch (error) {
         console.error('Error fetching kyz elements:', error);
         return { size: modelInfo.size, model: modelInfo.model, kyzElements: [] };
     }
 }
 
-// Функция для обновления DOM для бренда Best26
-function updateDOMForBest26(results) {
-    results.forEach(({ model, kyzElements }) => {
-        document.querySelectorAll(`.sectionForAcceptDeliverynew li[article-numb="${model}"]`).forEach((element, index) => {
-            const modelElement = element.querySelector('h5.headerLabelForModel').textContent;
-            const sizeElement = element.querySelector('.Size');
-            if (kyzElements[index] && modelElement === kyzElements[index].Model && sizeElement.textContent === kyzElements[index].Size) {
-                element.querySelector('.kyzArea').textContent = kyzElements[index].Crypto;
+// Общая функция для обновления DOM
+function updateDOM(results, selectorFactory, updateLogic) {
+    results.forEach((result) => {
+        const elements = document.querySelectorAll(selectorFactory(result));
+        elements.forEach((element, index) => {
+            const data = result.kyzElements[index];
+            if (data && updateLogic(element, data)) {
+                // Если логика обновления успешна, продолжаем
+                return;
             }
         });
     });
 }
 
+// Функция для обновления DOM для бренда Best26
+function updateDOMForBest26(results) {
+    updateDOM(
+        results,
+        ({ model }) => `.sectionForAcceptDeliverynew li[article-numb="${model}"]`,
+        (element, data) => {
+            const modelElement = element.querySelector('h5.headerLabelForModel');
+            const sizeElement = element.querySelector('.Size');
+            if (
+                modelElement &&
+                sizeElement &&
+                modelElement.textContent === data.Model &&
+                sizeElement.textContent === data.Size
+            ) {
+                const kyzArea = element.querySelector('.kyzArea');
+                kyzArea.textContent = data.Crypto;
+
+                // Сохраняем tableName и id в data-атрибутах
+                kyzArea.setAttribute('data-id', data.id);
+                kyzArea.setAttribute('data-table-name', data.tableName);
+
+                return true;
+            }
+            return false;
+        }
+    );
+}
+
 // Функция для обновления DOM для других брендов
 function updateDOMForOtherBrands(results) {
-    results.forEach(({ size, kyzElements }) => {
-        document.querySelectorAll(`.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`).forEach((element, index) => {
-            if (kyzElements[index]) {
-                element.textContent = kyzElements[index].Crypto;
-                element.parentElement.querySelector('.FullkyzArea').textContent = kyzElements[index].fullline;
+    updateDOM(
+        results,
+        ({ size }) => `.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`,
+        (element, data) => {
+            element.textContent = data.Crypto;
+
+            // Сохраняем tableName и id в data-атрибутах
+            element.setAttribute('data-id', data.id);
+            element.setAttribute('data-table-name', data.tableName);
+
+            const fullKyzElement = element.parentElement.querySelector('.FullkyzArea');
+            if (fullKyzElement) {
+                fullKyzElement.textContent = data.fullline;
+                return true;
             }
-        });
-    });
+            return false;
+        }
+    );
 }
 
 // Функция для перемещения элементов между складами

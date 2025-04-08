@@ -605,10 +605,10 @@ async function getQuests() {
   let a = 0
 
   async function getWbSizeFromApi(skus) {
-    const response = await fetch(`http://${window.location.hostname}:3000/getWbSize${statusProgram.brand}?skus=${skus}`);
+    const response = await fetch(`http://${window.location.hostname}:3000/getWbSize?skus=${skus}&brand=${statusProgram.brand}`);
     if (response.ok) {
       const data = await response.json();
-      return data.tech_size;
+      return data.techSize;
     } else {
       throw new Error('Размер не найден');
     }
