@@ -106,71 +106,92 @@ app.get('/api/getApiById', async (req, res) => {
 
 const reservedKyz = new Map(); // Хранилище для зарезервированных ЧЗ
 
-// Выборка доступной записи
-async function selectAvailableRecord(model, brand, size) {
+// Выборка доступных записей
+async function selectAvailableRecords(model, brand, size, count) {
     const tableName = await getCategoryByModel(model, brand, size);
     const query = `
         SELECT id, crypto, model, size 
         FROM ${tableName}
         WHERE size = ? AND brand = ? AND model = ? AND status IN ('Comeback', 'Waiting')
+        LIMIT ?
     `;
-    const [rows] = await pool.execute(query, [size, brand, model]);
-    return rows.length > 0 ? { ...rows[0], tableName } : null;
+    const [rows] = await pool.execute(query, [size, brand, model, count]);
+    return rows.map(row => ({ ...row, tableName }));
 }
 
-// Резервирование записи
-async function reserveRecord(tableName, recordId) {
+// Резервирование записей
+async function reserveRecords(tableName, recordIds) {
+    if (recordIds.length === 0) return;
+    const placeholders = recordIds.map(() => '?').join(', ');
     const query = `
         UPDATE ${tableName} 
         SET status = 'Reserved'
-        WHERE id = ? AND status IN ('Comeback', 'Waiting')
+        WHERE id IN (${placeholders}) AND status IN ('Comeback', 'Waiting')
     `;
-    await pool.execute(query, [recordId]);
+    await pool.execute(query, recordIds);
 }
 
-// Добавление записи в хранилище reservedKyz
-function addReservedRecord(id, record) {
-    reservedKyz.set(id, { ...record, status: 'Reserved' });
-    console.log(`Добавлена запись в reservedKyz: id=${id}, tableName=${record.tableName}`);
+// Добавление записей в хранилище reservedKyz
+function addReservedRecords(records) {
+    records.forEach(record => {
+        reservedKyz.set(record.id, { ...record, status: 'Reserved' });
+        console.log(`Добавлена запись в reservedKyz: id=${record.id}, tableName=${record.tableName}`);
+    });
 }
 
 // Основная функция
 app.get('/kyz', async (req, res) => {
-    const { size, brand, model } = req.query;
-
+    const { size, brand, model, count } = req.query;
+    console.log(size, brand, model, count)
     // Валидация входных данных
-    if (!size || !brand || !model) {
-        return res.status(400).json({ error: 'Параметры size, brand и model обязательны.' });
+    try {
+        validateInput({ size, brand, model, count });
+    } catch (error) {
+        return res.status(400).json({ error: error.message });
     }
 
+    const requestedCount = parseInt(count, 10) || 1; // По умолчанию 1, если count не указан
+
     try {
-        // Выборка доступной записи
-        const record = await selectAvailableRecord(model, brand, size);
-        if (!record) {
+        // Выборка доступных записей
+        const records = await selectAvailableRecords(model, brand, size, requestedCount);
+        if (records.length === 0) {
             return res.status(404).json({ error: 'Доступные честные знаки не найдены.' });
         }
 
-        // Резервирование записи
-        await reserveRecord(record.tableName, record.id);
+        // Извлечение ID записей
+        const recordIds = records.map(record => record.id);
+        const tableName = records[0].tableName;
 
-        // Добавление записи в хранилище
-        addReservedRecord(record.id, record);
+        // Резервирование записей
+        await reserveRecords(tableName, recordIds);
+
+        // Добавление записей в хранилище
+        addReservedRecords(records);
 
         // Возвращаем данные клиенту
         res.json({
-            data: {
+            data: records.map(record => ({
                 Crypto: record.crypto,
                 Model: record.model,
                 Size: record.size,
                 id: record.id,
                 tableName: record.tableName
-            }
+            }))
         });
     } catch (err) {
-        console.error('Ошибка выполнения запроса:', err.message);
+        console.error('Ошибка выполнения запроса:', { message: err.message, stack: err.stack });
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+// Функция для валидации входных данных
+function validateInput({ size, brand, model, count }) {
+    if (!/^\d+$/.test(size)) throw new Error('Некорректный размер.');
+    if (!['BestShoes', 'Armbest', 'Best26'].includes(brand)) throw new Error('Некорректный бренд.');
+    if (!model || typeof model !== 'string') throw new Error('Некорректная модель.');
+    if (count && isNaN(count)) throw new Error('Некорректное количество.');
+}
 
 // Маршрут для обновления статуса строки
 app.post('/kyzComeback', async (req, res) => {

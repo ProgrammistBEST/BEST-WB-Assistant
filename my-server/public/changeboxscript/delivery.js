@@ -488,47 +488,122 @@ function PressButtonDeliveryPost() {
     }
 }
 
+// Функция для перемещения элементов между складами
+function moveBoxesToStocks() {
+    document.querySelectorAll('.sectionForAcceptDeliverynew .Boxtransferredfordelivery').forEach((box) => {
+        if (box.closest('article')) return;
+
+        const stockSelectors = {
+            Утро: '.morningstockes',
+            Вечер: '.eveningstockes',
+            Остатки: '.leftoversstockes',
+        };
+
+        Object.entries(stockSelectors).forEach(([time, selector]) => {
+            if (box.classList.contains(time)) {
+                ['firstStock', 'secondStock', 'thirdStock'].forEach((stock) => {
+                    if (box.classList.contains(stock)) {
+                        document.querySelector(`${selector} .${stock}`).appendChild(box);
+                    }
+                });
+            }
+        });
+    });
+}
+
+// Функция для проверки корректности данных
+function validateBoxes() {
+    document.querySelectorAll('.stockes .Boxtransferredfordelivery .transferredfordelivery').forEach((box) => {
+        const fields = [
+            { selector: '.StockAreaHide', message: 'Не указан склад' },
+            { selector: 'h5.headerLabelForModel', message: 'Отсутствует артикул' },
+            { selector: 'p.Size', message: 'Отсутствует размер' },
+            { selector: '.stickerArea', message: 'Отсутствует стикер' },
+            { selector: '.kyzArea', message: 'Отсутствует КИЗ' },
+            { selector: '.createAt', message: 'Отсутствует время создания' },
+            { selector: '.colorArea', message: 'Отсутствует цвет' },
+            { selector: '.skusArea', message: 'Отсутствует баркод' },
+            { selector: '.nmId', message: 'Отсутствует номер заказа' },
+        ];
+
+        fields.forEach(({ selector, message }) => {
+            if (!box.querySelector(selector)?.textContent.trim()) {
+                alert(`Ошибка с Артикулом №${box.querySelector('h5.headerLabelForModel')?.textContent}: ${message}`);
+                box.style.backgroundColor = 'red';
+            }
+        });
+    });
+}
+
 // Функция для получения данных о моделях
 function getModelData(brand) {
-    const models = [];
+    const modelMap = {}; // Хранилище для группировки данных
+
+    // Проходим по всем элементам заказов
     document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element) => {
         const modelElement = element.querySelector('h5.headerLabelForModel');
         const sizeElement = element.querySelector('.Size');
 
-        if (modelElement && sizeElement) {
-            const model = brand === 'Best26'
-                ? modelElement.textContent.replace(/[.]/g, '')
-                : 'ЭВА';
+        if (!modelElement || !sizeElement) {
+            console.error('Ошибка: Отсутствует модель или размер для элемента:', element);
+            return;
+        }
 
-            models.push({
-                model,
-                size: sizeElement.textContent,
-            });
+        const model = brand === 'Best26'
+            ? modelElement.textContent.replace(/[.]/g, '').trim()
+            : 'ЭВА';
+        const size = sizeElement.textContent.trim();
+
+        const key = `${model}-${size}`; // Уникальный ключ для модели и размера
+
+        // Группируем данные
+        if (!modelMap[key]) {
+            modelMap[key] = { model, size, count: 1 };
+        } else {
+            modelMap[key].count += 1; // Увеличиваем счетчик
         }
     });
-    return models;
+
+    // Преобразуем объект в массив
+    return Object.values(modelMap);
 }
 
 // Функция для выполнения HTTP-запросов
 async function fetchKyzElements(modelInfo, brand) {
     try {
-        const response = await fetch(`/kyz?size=${modelInfo.size}&brand=${brand}&model=${modelInfo.model}`, { method: 'GET' });
-        if (!response.ok) throw new Error(`Ошибка сети: ${response.status}`);
+        const { model, size, count } = modelInfo;
+
+        // Проверка параметров
+        if (!size || !brand || !model || !count) {
+            console.error('Ошибка: Некорректные параметры запроса:', { size, brand, model, count });
+            return { size, model, kyzElements: [] };
+        }
+
+        // Формируем URL для GET-запроса
+        const url = `/kyz?size=${size}&brand=${brand}&model=${model}&count=${count}`;
+        console.log(`Запрос КИЗов: ${url}`);
+
+        const response = await fetch(url, { method: 'GET' });
+
+        if (!response.ok) {
+            console.error(`Ошибка сети: ${response.status}. URL: ${url}`);
+            throw new Error(`Ошибка сети: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log(`Ответ сервера:`, data);
 
         // Добавляем tableName и id к Crypto
         return {
-            size: modelInfo.size,
-            model: modelInfo.model,
-            kyzElements: [
-                {
-                    Crypto: data.data.Crypto,
-                    id: data.data.id,
-                    tableName: data.data.tableName,
-                    Model: data.data.Model,
-                    Size: data.data.Size
-                }
-            ]
+            size,
+            model,
+            kyzElements: data.data.map((item) => ({
+                Crypto: item.Crypto,
+                id: item.id,
+                tableName: item.tableName,
+                Model: item.Model,
+                Size: item.Size,
+            })),
         };
     } catch (error) {
         console.error('Error fetching kyz elements:', error);
@@ -600,60 +675,20 @@ function updateDOMForOtherBrands(results) {
     );
 }
 
-// Функция для перемещения элементов между складами
-function moveBoxesToStocks() {
-    document.querySelectorAll('.sectionForAcceptDeliverynew .Boxtransferredfordelivery').forEach((box) => {
-        if (box.closest('article')) return;
-
-        const stockSelectors = {
-            Утро: '.morningstockes',
-            Вечер: '.eveningstockes',
-            Остатки: '.leftoversstockes',
-        };
-
-        Object.entries(stockSelectors).forEach(([time, selector]) => {
-            if (box.classList.contains(time)) {
-                ['firstStock', 'secondStock', 'thirdStock'].forEach((stock) => {
-                    if (box.classList.contains(stock)) {
-                        document.querySelector(`${selector} .${stock}`).appendChild(box);
-                    }
-                });
-            }
-        });
-    });
-}
-
-// Функция для проверки корректности данных
-function validateBoxes() {
-    document.querySelectorAll('.stockes .Boxtransferredfordelivery .transferredfordelivery').forEach((box) => {
-        const fields = [
-            { selector: '.StockAreaHide', message: 'Не указан склад' },
-            { selector: 'h5.headerLabelForModel', message: 'Отсутствует артикул' },
-            { selector: 'p.Size', message: 'Отсутствует размер' },
-            { selector: '.stickerArea', message: 'Отсутствует стикер' },
-            { selector: '.kyzArea', message: 'Отсутствует КИЗ' },
-            { selector: '.createAt', message: 'Отсутствует время создания' },
-            { selector: '.colorArea', message: 'Отсутствует цвет' },
-            { selector: '.skusArea', message: 'Отсутствует баркод' },
-            { selector: '.nmId', message: 'Отсутствует номер заказа' },
-        ];
-
-        fields.forEach(({ selector, message }) => {
-            if (!box.querySelector(selector)?.textContent.trim()) {
-                alert(`Ошибка с Артикулом №${box.querySelector('h5.headerLabelForModel')?.textContent}: ${message}`);
-                box.style.backgroundColor = 'red';
-            }
-        });
-    });
-}
-
 // Главная функция
 async function addKyzForModelsToDilivery() {
     const brand = statusProgram.brand;
-    const models = getModelData(brand);
+    console.log(`Бренд: ${brand}`);
 
-    const fetchPromises = models.map((modelInfo) => fetchKyzElements(modelInfo, brand));
+    const models = getModelData(brand);
+    console.log('Данные моделей:', models);
+
+    const fetchPromises = models.map((modelInfo) =>
+        fetchKyzElements(modelInfo, brand)
+    );
     const results = await Promise.all(fetchPromises);
+
+    console.log('Результаты запросов:', results);
 
     if (brand === 'Best26') {
         updateDOMForBest26(results);
