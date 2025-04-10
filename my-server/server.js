@@ -142,7 +142,7 @@ function addReservedRecords(records) {
 // Основная функция
 app.get('/kyz', async (req, res) => {
     const { size, brand, model, count } = req.query;
-    console.log(size, brand, model, count)
+
     // Валидация входных данных
     try {
         validateInput({ size, brand, model, count });
@@ -153,6 +153,9 @@ app.get('/kyz', async (req, res) => {
     const requestedCount = parseInt(count, 10) || 1; // По умолчанию 1, если count не указан
 
     try {
+        // Проверка и обновление статуса в reservedKyz
+        handleReservedKyz();
+
         // Выборка доступных записей
         const records = await selectAvailableRecords(model, brand, size, requestedCount);
         if (records.length === 0) {
@@ -184,6 +187,33 @@ app.get('/kyz', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+// Функция для обработки reservedKyz
+function handleReservedKyz() {
+    for (const [id, record] of reservedKyz.entries()) {
+        if (record.status === 'Reserved') {
+            // Изменяем статус на "Waiting"
+            updateStatusInDatabase(record.tableName, id, 'Waiting');
+            reservedKyz.delete(id); // Удаляем запись из хранилища
+            console.log(`Статус записи с id=${id} изменен на "Waiting".`);
+        }
+    }
+}
+
+// Функция для обновления статуса в базе данных
+async function updateStatusInDatabase(tableName, id, newStatus) {
+    const query = `
+        UPDATE ${tableName}
+        SET status = ?
+        WHERE id = ?
+    `;
+    try {
+        await pool.execute(query, [newStatus, id]);
+        console.log(`Статус записи с id=${id} успешно обновлен на "${newStatus}".`);
+    } catch (err) {
+        console.error(`Ошибка при обновлении статуса записи с id=${id}:`, err.message);
+    }
+}
 
 // Функция для валидации входных данных
 function validateInput({ size, brand, model, count }) {
@@ -276,13 +306,13 @@ app.post('/kyzComeback', async (req, res) => {
 });
 
 // Проверка существования записи в базе данных
-async function validateRecordExistence(tableName, id, status, crypto) {
+async function validateRecordExistence(tableName, id, crypto) {
     const query = `
         SELECT pdf 
         FROM ${tableName} 
-        WHERE id = ? AND status = ? AND crypto = ?
+        WHERE id = ? AND crypto = ?
     `;
-    const [rows] = await pool.execute(query, [id, status, crypto]);
+    const [rows] = await pool.execute(query, [id, crypto]);
     return rows.length > 0 ? rows[0] : null;
 }
 
@@ -312,7 +342,7 @@ app.post('/getCryptoToFinishDocument', async (req, res) => {
 
     try {
         // Проверяем существование записи
-        const record = await validateRecordExistence(tableName, id, 'Reserved', Crypto);
+        const record = await validateRecordExistence(tableName, id, Crypto);
         if (!record) {
             logError('Запись не найдена:', { id, tableName, Crypto });
             return res.status(404).json({ error: 'Запись не найдена.' });
@@ -340,7 +370,6 @@ app.put('/kyzUpdateStatus', async (req, res) => {
     }
 
     try {
-
         // Подключаемся к базе данных
         const connection = await pool.getConnection();
         await connection.beginTransaction();
@@ -354,12 +383,31 @@ app.put('/kyzUpdateStatus', async (req, res) => {
         await connection.execute(updateSql, [dateNow, id]);
 
         await connection.commit();
+
+        // Проверка и обновление статуса в reservedKyz
+        handleReservedKyzAfterUpdate();
+
         res.json({ message: 'Статус успешно обновлен на Used.' });
     } catch (err) {
         console.error('Ошибка выполнения запроса:', err.message);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+// Функция для проверки и обновления статуса после /kyzUpdateStatus
+function handleReservedKyzAfterUpdate() {
+    for (const [id, record] of reservedKyz.entries()) {
+        if (record.status === 'Reserved') {
+            // Изменяем статус на "Waiting"
+            updateStatusInDatabase(record.tableName, id, 'Waiting');
+            reservedKyz.delete(id); // Удаляем запись из хранилища
+            console.log(`Статус записи с id=${id} изменен на "Waiting".`);
+        }
+    }
+    // Очищаем массив полностью
+    reservedKyz.clear();
+    console.log('Массив reservedKyz очищен.');
+}
 
 // Получение размеров
 app.get('/getWBSize', async (req, res) => {
