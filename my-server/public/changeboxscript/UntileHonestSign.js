@@ -23,11 +23,6 @@ async function untileHonestSignYes() {
       const tableName = kyzArea.getAttribute("data-table-name");
       const id = kyzArea.getAttribute("data-id");
 
-      if (!tableName || !id) {
-          console.error("Ошибка: Отсутствуют tableName или id для записи:", linekyz);
-          return;
-      }
-
       const data = {
           tableName,
           id,
@@ -41,7 +36,7 @@ async function untileHonestSignYes() {
           headers: {
               'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ tableName, id }), // Передаем только tableName и id
+          body: JSON.stringify({ data }), // Передаем только tableName и id
       })
           .then(response => response.json())
           .then(data => {

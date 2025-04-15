@@ -405,7 +405,7 @@ function buttonforCounterBoxAndItems() {
         let ul = box.querySelector('ul');
         let items = Array.from(ul.querySelectorAll('li'));
         let boxHeader = box.querySelector('.p_article_put_order_in_box')
-        if (box.classList.contains('best26')) {
+        if (box.classList.contains('Armbest')) {
             PreNumberBox = '1'
             if (date < 10) {
                 date = '0' + date;
@@ -434,7 +434,7 @@ function buttonforCounterBoxAndItems() {
             boxescountInPanelBEST26++;
 
         }
-        else if (box.classList.contains('best26')) {
+        else if (box.classList.contains('BestShoes')) {
             PreNumberBox = '3'
             if (date < 10) {
                 date = '0' + date;
@@ -453,13 +453,13 @@ function buttonforCounterBoxAndItems() {
         // Группировка элементов по Article
         let groups = items.reduce((acc, item) => {
             let article = item.querySelector('.headerLabelForModel').textContent;
-            if (box.classList.contains('best26') && box.classList.contains(statusProgram.NameDelivery)) {
+            if (box.classList.contains('Armbest') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelARM++
             }
             else if (box.classList.contains('Best26') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST26++
             }
-            else if (box.classList.contains('best26') && box.classList.contains(statusProgram.NameDelivery)) {
+            else if (box.classList.contains('BestShoes') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST++
             }
             if (!acc[article]) {
@@ -481,7 +481,7 @@ function buttonforCounterBoxAndItems() {
             });
         });
     });
-    if (statusProgram.brand == 'best26') {
+    if (statusProgram.brand == 'Armbest') {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelARM
         document.getElementById('countBoxNumb').textContent = boxescountInPanelARM
     }
@@ -489,7 +489,7 @@ function buttonforCounterBoxAndItems() {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST26
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST26
     }
-    else if (statusProgram.brand == 'best26') {
+    else if (statusProgram.brand == 'BestShoes') {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST
     }

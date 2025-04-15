@@ -104,82 +104,52 @@ app.get('/api/getApiById', async (req, res) => {
 	}
 });
 
-const reservedKyz = new Map(); // Хранилище для зарезервированных ЧЗ
+// Основная функция
+app.get('/kyz', async (req, res) => {
+    const { size, brand, model, count } = req.query;
 
-// Выборка доступных записей
-async function selectAvailableRecords(model, brand, size, count) {
+    // Проверка параметров
+    if (!size || !brand || !model || isNaN(count) || count <= 0) {
+        return res.status(400).json({ error: 'Invalid parameters' });
+    }
+
+    // Получение имени таблицы
     const tableName = await getCategoryByModel(model, brand, size);
+
+    console.log(`KYZ Запрос: size=${size}, brand=${brand}, model=${model}, count=${count}`);
+    console.log(`KYZ Таблица: ${tableName}`);
+
+    // SQL-запросы
     const query = `
         SELECT id, crypto, model, size 
         FROM ${tableName}
         WHERE size = ? AND brand = ? AND model = ? AND status IN ('Comeback', 'Waiting')
         LIMIT ?
     `;
-    const [rows] = await pool.execute(query, [size, brand, model, count]);
-    return rows.map(row => ({ ...row, tableName }));
-}
-
-// Резервирование записей
-async function reserveRecords(tableName, recordIds) {
-    if (recordIds.length === 0) return;
-    const placeholders = recordIds.map(() => '?').join(', ');
-    const query = `
+    const queryUpdate = `
         UPDATE ${tableName} 
-        SET status = 'Reserved'
-        WHERE id IN (${placeholders}) AND status IN ('Comeback', 'Waiting')
+        SET status = 'Reserved', user = 'Marketplace', date_used = NOW()
+        WHERE id = ? AND status IN ('Comeback', 'Waiting')
     `;
-    await pool.execute(query, recordIds);
-}
-
-// Добавление записей в хранилище reservedKyz
-function addReservedRecords(records) {
-    records.forEach(record => {
-        reservedKyz.set(record.id, { ...record, status: 'Reserved' });
-        console.log(`Добавлена запись в reservedKyz: id=${record.id}, tableName=${record.tableName}`);
-    });
-}
-
-// Основная функция
-app.get('/kyz', async (req, res) => {
-    const { size, brand, model, count } = req.query;
-
-    // Валидация входных данных
-    try {
-        validateInput({ size, brand, model, count });
-    } catch (error) {
-        return res.status(400).json({ error: error.message });
-    }
-
-    const requestedCount = parseInt(count, 10) || 1; // По умолчанию 1, если count не указан
 
     try {
-        // Проверка и обновление статуса в reservedKyz
-        handleReservedKyz();
+        // Выборка данных
+        const [rows] = await pool.execute(query, [size, brand, model, count], tableName);
+        console.log(`KYZ Найдено записей: ${rows.length}`);
 
-        // Выборка доступных записей
-        const records = await selectAvailableRecords(model, brand, size, requestedCount);
-        if (records.length === 0) {
-            return res.status(404).json({ error: 'Доступные честные знаки не найдены.' });
+        // Обновление статуса
+        for (const row of rows) {
+            await pool.execute(queryUpdate, [row.id]);
         }
-
-        // Извлечение ID записей
-        const recordIds = records.map(record => record.id);
-        const tableName = records[0].tableName;
-
-        // Резервирование записей
-        await reserveRecords(tableName, recordIds);
-
-        // Добавление записей в хранилище
-        addReservedRecords(records);
 
         // Возвращаем данные клиенту
         res.json({
-            data: records.map(record => ({
-                Crypto: record.crypto,
-                Model: record.model,
-                Size: record.size,
-                id: record.id,
-                tableName: record.tableName
+            data: rows.map(row => ({
+                Crypto: row.crypto,
+                Model: row.model,
+                Size: row.size,
+                id: row.id,
+                tableName: tableName
             }))
         });
     } catch (err) {
@@ -187,18 +157,6 @@ app.get('/kyz', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
-
-// Функция для обработки reservedKyz
-function handleReservedKyz() {
-    for (const [id, record] of reservedKyz.entries()) {
-        if (record.status === 'Reserved') {
-            // Изменяем статус на "Waiting"
-            updateStatusInDatabase(record.tableName, id, 'Waiting');
-            reservedKyz.delete(id); // Удаляем запись из хранилища
-            console.log(`Статус записи с id=${id} изменен на "Waiting".`);
-        }
-    }
-}
 
 // Функция для обновления статуса в базе данных
 async function updateStatusInDatabase(tableName, id, newStatus) {
@@ -215,22 +173,16 @@ async function updateStatusInDatabase(tableName, id, newStatus) {
     }
 }
 
-// Функция для валидации входных данных
-function validateInput({ size, brand, model, count }) {
-    if (!/^\d+$/.test(size)) throw new Error('Некорректный размер.');
-    if (!['BestShoes', 'Armbest', 'Best26'].includes(brand)) throw new Error('Некорректный бренд.');
-    if (!model || typeof model !== 'string') throw new Error('Некорректная модель.');
-    if (count && isNaN(count)) throw new Error('Некорректное количество.');
-}
-
 // Маршрут для обновления статуса строки
 app.post('/kyzComeback', async (req, res) => {
-    const { tableName, id } = req.body;
+    // const { tableName, id } = req.body;
+    const tableName = req.body.tableName;
+    const id = req.body.id;
 
     // Валидация входных данных
     if (!tableName || !id) {
         console.error('Ошибка валидации: tableName и ID обязательны.');
-        return res.status(400).json({ error: 'tableName и ID честного знака обязательны.' });
+        return res.json({ message: 'Статус успешно обновлен (ни tableName, ни id не переданы).' });
     }
 
     console.log(`Получен запрос: tableName=${tableName}, id=${id}`);
@@ -309,7 +261,7 @@ app.post('/kyzComeback', async (req, res) => {
 async function validateRecordExistence(tableName, id, crypto) {
     const query = `
         SELECT pdf 
-        FROM ${tableName} 
+        FROM ${tableName}
         WHERE id = ? AND crypto = ?
     `;
     const [rows] = await pool.execute(query, [id, crypto]);
