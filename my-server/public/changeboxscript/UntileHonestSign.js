@@ -23,29 +23,27 @@ async function untileHonestSignYes() {
       const tableName = kyzArea.getAttribute("data-table-name");
       const id = kyzArea.getAttribute("data-id");
 
-      const data = {
-          tableName,
-          id,
-          line: linekyz,
-          size: lineSize,
-          brand: lineBrand,
-      };
-
       fetch('/kyzComeback', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ data }), // Передаем только tableName и id
-      })
-          .then(response => response.json())
-          .then(data => {
-              console.log('Success:', data);
-              kyzItem.remove(); // Удаляем элемент из DOM после успешного запроса
-          })
-          .catch(error => {
-              console.error('Error:', error);
-          });
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tableName, id }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Ошибка:', data.error);
+                alert('Не удалось обновить статус. Попробуйте снова.');
+            } else {
+                console.log('Success:', data.message);
+                kyzItem.remove(); // Удаляем элемент из DOM после успешного запроса
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при отправке запроса.');
+        });
   });
 }
 
