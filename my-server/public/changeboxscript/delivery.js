@@ -14,6 +14,8 @@ let statusProgramLoad = JSON.parse(statusProgramSS);
             token = await getApiById(9, 'Best26', 'WB');
         } else if (statusProgramLoadApp.brand === 'BestShoes') {
             token = await getApiById(6, 'Bestshoes', 'WB');
+        } else if (statusProgramLoadApp.brand === 'Arm2') {
+            token = await getApiById(17, 'Arm2', 'WB');
         }
     } catch (error) {
         console.error('Ошибка при обработке токена:', error.message);
@@ -44,6 +46,9 @@ function AddNewBoxButton() {
     else if (statusProgram.brand == 'BestShoes') {
         container.style.backgroundColor = '#C4E5FF'
     }
+    else if (statusProgram.brand == 'Arm2') {
+        container.style.backgroundColor = '#FCB996'
+    }
 
     // container.id = article;
     boxforContainer.appendChild(container)
@@ -65,6 +70,9 @@ function AddNewBoxButton() {
     }
     else if (prodBrand == 'BestShoes') {
         PreNumberBox = '3'
+    }
+    else if (prodBrand == 'Arm2') {
+        PreNumberBox = '2'
     }
     if (date < 10) {
         date = '0' + date;
@@ -358,6 +366,9 @@ function Sendfordelivery() {
     }
     else if (prodBrand == 'BestShoes') {
         PreNumberBox = '3'
+    }
+    else if (prodBrand == 'Arm2') {
+        PreNumberBox = '2'
     }
     if (date < 10) {
         date = '0' + date;

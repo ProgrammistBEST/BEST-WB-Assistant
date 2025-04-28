@@ -386,16 +386,19 @@ function buttonforCounterBoxAndItems() {
     let boxcountInPanelARM = 0;
     let boxcountInPanelBEST = 0;
     let boxcountInPanelBEST26 = 0;
+    let boxcountInPanelARM2 = 0;
 
     let boxescountInPanel = 0;
     let boxescountInPanelARM = 0;
     let boxescountInPanelBEST = 0;
     let boxescountInPanelBEST26 = 0;
+    let boxescountInPanelARM2 = 0;
 
     let unknownfile = new Date();
     let a = document.querySelector('.inputForDelivery').value
     let b = document.querySelector('.inputForDelivery').value
     let c = document.querySelector('.inputForDelivery').value
+    let d = document.querySelector('.inputForDelivery').value
 
     let prodBrand = statusProgram.brand
     let PreNumberBox;
@@ -448,6 +451,20 @@ function buttonforCounterBoxAndItems() {
             c++
             boxescountInPanelBEST++;
         }
+        else if (box.classList.contains('Arm2')) {
+            PreNumberBox = '2'
+            if (date < 10) {
+                date = '0' + date;
+            }
+            if (d < 10) {
+                boxHeader.textContent = `${date}` + '/' + `${PreNumberBox}` + '0' + d;
+            }
+            else {
+                boxHeader.textContent = `${date}` + '/' + `${PreNumberBox}` + d;
+            }
+            d++
+            boxescountInPanelARM2++;
+        }
         console.log(PreNumberBox)
 
         // Группировка элементов по Article
@@ -461,6 +478,9 @@ function buttonforCounterBoxAndItems() {
             }
             else if (box.classList.contains('BestShoes') && box.classList.contains(statusProgram.NameDelivery)) {
                 boxcountInPanelBEST++
+            }
+            else if (box.classList.contains('Arm2') && box.classList.contains(statusProgram.NameDelivery)) {
+                boxcountInPanelARM2++
             }
             if (!acc[article]) {
                 acc[article] = [];
@@ -492,5 +512,9 @@ function buttonforCounterBoxAndItems() {
     else if (statusProgram.brand == 'BestShoes') {
         document.getElementById('countBoxNumber').textContent = boxcountInPanelBEST
         document.getElementById('countBoxNumb').textContent = boxescountInPanelBEST
+    }
+    else if (statusProgram.brand == 'Arm2') {
+        document.getElementById('countBoxNumber').textContent = boxcountInPanelARM2
+        document.getElementById('countBoxNumb').textContent = boxescountInPanelARM2
     }
 }

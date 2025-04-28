@@ -703,6 +703,9 @@ function createContainerForBox(article, items, a) {
   else if (statusProgram.brand == 'BestShoes') {
     container.style.backgroundColor = '#C4E5FF'
   }
+  else if (statusProgram.brand == 'Arm2') {
+    container.style.backgroundColor = '#FCB996'
+  }
 
   items.forEach(item => {
     if (!item.sticker) {

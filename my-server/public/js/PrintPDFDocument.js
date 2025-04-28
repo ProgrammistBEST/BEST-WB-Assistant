@@ -464,6 +464,9 @@ async function finishDocument(choosedVariant) {
             else if (fileBrand == 'Armbest') {
                 url = `/download?fileBrand=${encodeURIComponent('ARMBEST')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
+            else if (fileBrand == 'ARM2') {
+                url = `/download?fileBrand=${encodeURIComponent('ARM2')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
+            }
 
             let imagesKYZPDF;
             const data = {
@@ -503,7 +506,7 @@ async function finishDocument(choosedVariant) {
             let articleForFetch;
             if (statusProgram.brand == 'Best26') {
                 articleForFetch = orderItem.orderArtikul;
-            } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes') {
+            } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes' || statusProgram.brand == 'Arm2') {
                 articleForFetch = 'ЭВА';
             }
 
@@ -617,6 +620,22 @@ async function finishDocument(choosedVariant) {
                         doc.text('арт ' + NewArikulForArenPDF, 32, 10);
                         doc.setFontSize(6);
                         doc.text(NumberStick, 32, 6);
+                        doc.setTextColor(0, 0, 0);
+                    }
+
+                    else if (statusProgramLoadPrintPDFDOC.brand == 'Arm2') {
+                        doc.setFillColor(1, 1, 1);
+                        doc.setTextColor(255, 255, 255);
+                        doc.rect(29.5, 1.2, 25, 9, 'F');
+                        if (article.length > 7) {
+                            doc.setFontSize(3);
+                        }
+                        else {
+                            doc.setFontSize(4);
+                        }
+                        doc.text('арт ' + NewArikulForArenPDF, 32, 9);
+                        doc.setFontSize(4);
+                        doc.text(NumberStick, 34, 5.6);
                         doc.setTextColor(0, 0, 0);
                     }
                     doc.addPage([58, 40], 'landscape');
@@ -770,7 +789,7 @@ async function finishDocument(choosedVariant) {
         let articleForFetch;
         if (statusProgram.brand === 'Best26') {
             articleForFetch = article;
-        } else if (statusProgram.brand === 'Armbest' || statusProgram.brand === 'BestShoes') {
+        } else if (statusProgram.brand === 'Armbest' || statusProgram.brand === 'BestShoes' || statusProgram.brand === 'Arm2') {
             articleForFetch = 'ЭВА';
         }
     

@@ -190,6 +190,9 @@ nav {
 .brand-3::after {
     content: "BestShoes";
 }
+.brand-4::after {
+    content: "Arm2";
+}
 .bpxelem {
     user-select: none; /* Запрещает выделение текста внутри элемента */
 }

@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', function () {
         navbarBrandElement.classList.add('brand-3');
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTYyNiwiaWQiOiIwMTkzM2U5Mi1jNjM3LTc3Y2YtODhjYy02MTg1OGViY2E2OWEiLCJpaWQiOjUxODk0ODAyLCJvaWQiOjE5MDEzNSwicyI6MjQ2LCJzaWQiOiIzYjIzZGM5Zi1iYzgxLTRmMWUtOGNhMi02ODZjMzA2NjJjMDMiLCJ0IjpmYWxzZSwidWlkIjo1MTg5NDgwMn0.y87P-oDaqk1jgxqeUwc12F0HXIdFDd6PHBSFcNntUKcbeHDiumMgf5dOokZdnM-GXvO8B1cEQhffo8T1bxP17Q'
     }
+    else if (statusProgram.brand == 'Arm2') {
+        navbarBrandElement.classList.add('brand-4');
+        token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjUwMjE3djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc2MDAzOTkxMywiaWQiOiIwMTk2MWViNS0zM2M4LTdjMWUtYTU2Yi05ZmQxODVmMzM2MTciLCJpaWQiOjI1MjA2NzYzNCwib2lkIjo0NTI2NDg1LCJzIjozMzE2LCJzaWQiOiJlMjFmODMxYi1lODg5LTQ2NjctYmQ4Yi05OWYyMWRkZjgxYWEiLCJ0IjpmYWxzZSwidWlkIjoyNTIwNjc2MzR9.NMaKmSe4BeGepWBK9zEUIzMS2IbESxv0n13QQLFKKv-PvPFs3e9THH5pVBIki4-Z50Kt1qfjR5XrBAOrVmHNcw'
+    }
     var dropdown = document.getElementById("navbarDropdown");
 
     dropdown.addEventListener('click', function (event) {
@@ -57,6 +61,11 @@ function chooseBrend(selectedbrand) {
     else if (statusProgram.brand == 'BestShoes') {
         navbarBrandElement.classList.add('brand-3');
         token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjQxMDE2djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc0NzY4OTYyNiwiaWQiOiIwMTkzM2U5Mi1jNjM3LTc3Y2YtODhjYy02MTg1OGViY2E2OWEiLCJpaWQiOjUxODk0ODAyLCJvaWQiOjE5MDEzNSwicyI6MjQ2LCJzaWQiOiIzYjIzZGM5Zi1iYzgxLTRmMWUtOGNhMi02ODZjMzA2NjJjMDMiLCJ0IjpmYWxzZSwidWlkIjo1MTg5NDgwMn0.y87P-oDaqk1jgxqeUwc12F0HXIdFDd6PHBSFcNntUKcbeHDiumMgf5dOokZdnM-GXvO8B1cEQhffo8T1bxP17Q'
+    }
+
+    else if (statusProgram.brand == 'Arm2') {
+        navbarBrandElement.classList.add('brand-4');
+        token = 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjUwMjE3djEiLCJ0eXAiOiJKV1QifQ.eyJlbnQiOjEsImV4cCI6MTc2MDAzOTkxMywiaWQiOiIwMTk2MWViNS0zM2M4LTdjMWUtYTU2Yi05ZmQxODVmMzM2MTciLCJpaWQiOjI1MjA2NzYzNCwib2lkIjo0NTI2NDg1LCJzIjozMzE2LCJzaWQiOiJlMjFmODMxYi1lODg5LTQ2NjctYmQ4Yi05OWYyMWRkZjgxYWEiLCJ0IjpmYWxzZSwidWlkIjoyNTIwNjc2MzR9.NMaKmSe4BeGepWBK9zEUIzMS2IbESxv0n13QQLFKKv-PvPFs3e9THH5pVBIki4-Z50Kt1qfjR5XrBAOrVmHNcw'
     }
 
     localStorage.setItem('statusProgram', JSON.stringify(statusProgram));
