@@ -464,7 +464,7 @@ async function finishDocument(choosedVariant) {
             else if (fileBrand == 'Armbest') {
                 url = `/download?fileBrand=${encodeURIComponent('ARMBEST')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
-            else if (fileBrand == 'ARM2') {
+            else if (fileBrand == 'Arm2') {
                 url = `/download?fileBrand=${encodeURIComponent('ARM2')}&generalArticle=${encodeURIComponent(generalArticle)}&article=${encodeURIComponent(articleFetch)}&size=${encodeURIComponent(sizeFetch)}`;
             }
 
@@ -504,9 +504,9 @@ async function finishDocument(choosedVariant) {
                 return
             }
             let articleForFetch;
-            if (statusProgram.brand == 'Best26') {
+            if (statusProgram.brand == 'Best26' || statusProgram.brand == 'Arm2') {
                 articleForFetch = orderItem.orderArtikul;
-            } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes' || statusProgram.brand == 'Arm2') {
+            } else if (statusProgram.brand == 'Armbest' || statusProgram.brand == 'BestShoes') {
                 articleForFetch = 'ЭВА';
             }
 
@@ -787,9 +787,9 @@ async function finishDocument(choosedVariant) {
     
         // Определяем articleForFetch в зависимости от бренда
         let articleForFetch;
-        if (statusProgram.brand === 'Best26') {
+        if (statusProgram.brand === 'Best26' || statusProgram.brand === 'Arm2') {
             articleForFetch = article;
-        } else if (statusProgram.brand === 'Armbest' || statusProgram.brand === 'BestShoes' || statusProgram.brand === 'Arm2') {
+        } else if (statusProgram.brand === 'Armbest' || statusProgram.brand === 'BestShoes') {
             articleForFetch = 'ЭВА';
         }
     

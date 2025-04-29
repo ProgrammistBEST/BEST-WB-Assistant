@@ -560,7 +560,7 @@ function getModelData(brand) {
             return;
         }
 
-        const model = brand === 'Best26'
+        const model = brand === 'Best26' || brand === 'Arm2'
             ? modelElement.textContent.replace(/[.]/g, '').trim()
             : 'ЭВА';
         const size = sizeElement.textContent.trim();
@@ -701,7 +701,7 @@ async function addKyzForModelsToDilivery() {
 
     console.log('Результаты запросов:', results);
 
-    if (brand === 'Best26') {
+    if (brand === 'Best26' || brand === 'Arm2') {
         updateDOMForBest26(results);
     } else {
         updateDOMForOtherBrands(results);

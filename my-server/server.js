@@ -97,7 +97,7 @@ async function fetchKyzRecords(tableName, size, brand, model, count) {
 }
 
 async function reserveKyzRecords(tableName, rows) {
-    console.log("KYZ update in:", tableName, rows);
+    // console.log("KYZ update in:", tableName, rows);
 
     // Формируем массив ID
     const idsUpdateStatus = rows.map(row => row.id);
@@ -141,11 +141,11 @@ app.get('/kyz', async (req, res) => {
 
     try {
         const tableName = await getCategoryByModel(model, brand, size);
-        console.log(`KYZ Request: size=${size}, brand=${brand}, model=${model}, count=${count}`);
-        console.log(`KYZ Table: ${tableName}`);
+        // console.log(`KYZ Request: size=${size}, brand=${brand}, model=${model}, count=${count}`);
+        // console.log(`KYZ Table: ${tableName}`);
 
         const rows = await fetchKyzRecords(tableName, size, brand, model, count);
-        console.log(`KYZ Records Found: ${rows.length}`);
+        // console.log(`KYZ Records Found: ${rows.length}`);
 
         await reserveKyzRecords(tableName, rows);
 
@@ -217,7 +217,7 @@ app.post('/getCryptoToFinishDocument', async (req, res) => {
 
     // Валидация входных данных
     if (!id || !tableName || !Crypto) {
-        console.log('Ошибка валидации:', { id, tableName, Crypto });
+        // console.log('Ошибка валидации:', { id, tableName, Crypto });
         return res.status(400).json({ error: 'ID, имя таблицы и Crypto обязательны.' });
     }
 
@@ -308,6 +308,7 @@ app.get('/download', (req, res) => {
     }
 
     // Путь
+    console.log(fileBrand, generalArticle, article, size)
     const filePath = path.join('\\\\WIN-SERVER\\bestfiles\\Упаковка', fileBrand, generalArticle, article, `${size}.pdf`);
 
     res.download(filePath, `${size}.pdf`, (err) => {
