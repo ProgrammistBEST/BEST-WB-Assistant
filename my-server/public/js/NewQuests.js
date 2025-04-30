@@ -719,6 +719,7 @@ function createContainerForBox(article, items, a) {
     listItem.id = `Article${article}-${x}-${statusProgram.brand}-`;
     listItem.className = `box bpxelem ${statusProgram.brand}`
     listItem.setAttribute('article-numb', preArt.replace(/[.]/g, ''));
+    listItem.setAttribute('data-size', item.size);
 
     if (item.stock == 'firstStock') {
       container.className += ' firstStock';

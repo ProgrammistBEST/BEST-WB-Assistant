@@ -550,13 +550,12 @@ function validateBoxes() {
 function getModelData(brand) {
     const modelMap = {}; // Хранилище для группировки данных
 
-    // Проходим по всем элементам заказов
-    document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element) => {
+    document.querySelectorAll('.sectionForAcceptDeliverynew .mainbox li').forEach((element, index) => {
         const modelElement = element.querySelector('h5.headerLabelForModel');
         const sizeElement = element.querySelector('.Size');
 
         if (!modelElement || !sizeElement) {
-            console.error('Ошибка: Отсутствует модель или размер для элемента:', element);
+            console.error(`[getModelData] Отсутствует модель или размер для элемента ${index}:`, element);
             return;
         }
 
@@ -567,6 +566,8 @@ function getModelData(brand) {
 
         const key = `${model}-${size}`; // Уникальный ключ для модели и размера
 
+        console.log(`[getModelData] Обработан элемент ${index}: model=${model}, size=${size}, key=${key}`);
+
         // Группируем данные
         if (!modelMap[key]) {
             modelMap[key] = { model, size, count: 1 };
@@ -575,8 +576,10 @@ function getModelData(brand) {
         }
     });
 
-    // Преобразуем объект в массив
-    return Object.values(modelMap);
+    const result = Object.values(modelMap);
+    console.log('[getModelData] Итоговые данные моделей:', result);
+
+    return result;
 }
 
 // Функция для выполнения HTTP-запросов
@@ -584,27 +587,26 @@ async function fetchKyzElements(modelInfo, brand) {
     try {
         const { model, size, count } = modelInfo;
 
-        // Проверка параметров
+        console.log(`[fetchKyzElements] Параметры запроса: size=${size}, brand=${brand}, model=${model}, count=${count}`);
+
         if (!size || !brand || !model || !count) {
-            console.error('Ошибка: Некорректные параметры запроса:', { size, brand, model, count });
+            console.error('[fetchKyzElements] Некорректные параметры запроса:', { size, brand, model, count });
             return { size, model, kyzElements: [] };
         }
 
-        // Формируем URL для GET-запроса
         const url = `/kyz?size=${size}&brand=${brand}&model=${model}&count=${count}`;
-        console.log(`Запрос КИЗов: ${url}`);
+        console.log(`[fetchKyzElements] Запрос КИЗов: ${url}`);
 
         const response = await fetch(url, { method: 'GET' });
 
         if (!response.ok) {
-            console.error(`Ошибка сети: ${response.status}. URL: ${url}`);
+            console.error(`[fetchKyzElements] Ошибка сети: ${response.status}. URL: ${url}`);
             throw new Error(`Ошибка сети: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log(`Ответ сервера:`, data);
+        console.log(`[fetchKyzElements] Ответ сервера для size=${size}, model=${model}:`, data);
 
-        // Добавляем tableName и id к Crypto
         return {
             size,
             model,
@@ -617,20 +619,32 @@ async function fetchKyzElements(modelInfo, brand) {
             })),
         };
     } catch (error) {
-        console.error('Error fetching kyz elements:', error);
+        console.error('[fetchKyzElements] Ошибка при получении КИЗов:', error);
         return { size: modelInfo.size, model: modelInfo.model, kyzElements: [] };
     }
 }
 
 // Общая функция для обновления DOM
 function updateDOM(results, selectorFactory, updateLogic) {
-    results.forEach((result) => {
-        const elements = document.querySelectorAll(selectorFactory(result));
-        elements.forEach((element, index) => {
-            const data = result.kyzElements[index];
+    results.forEach((result, index) => {
+        console.log(`[updateDOM] Обработка результата ${index}: size=${result.size}, model=${result.model}`);
+
+        // Получаем селектор на основе model + size
+        const selector = selectorFactory(result);
+
+        // Ищем все элементы по этому селектору
+        const elements = document.querySelectorAll(selector);
+        console.log(`[updateDOM] Найдено элементов для size=${result.size}, model=${result.model}:`, elements.length);
+
+        // Применяем логику обновления к каждому найденному элементу
+        elements.forEach((element, idx) => {
+            const data = result.kyzElements[idx];
+            console.log(`[updateDOM] Обработка элемента ${idx}:`, { element, data });
+
             if (data && updateLogic(element, data)) {
-                // Если логика обновления успешна, продолжаем
-                return;
+                console.log(`[updateDOM] Элемент успешно обновлен:`, { element, data });
+            } else {
+                console.warn(`[updateDOM] Не удалось обновить элемент:`, { element, data });
             }
         });
     });
@@ -640,26 +654,24 @@ function updateDOM(results, selectorFactory, updateLogic) {
 function updateDOMForBest26(results) {
     updateDOM(
         results,
-        ({ model }) => `.sectionForAcceptDeliverynew li[article-numb="${model}"]`,
+        // Строим селектор сразу по article-numb и data-size
+        ({ model, size }) => `.sectionForAcceptDeliverynew li[article-numb="${model}"][data-size="${size}"]`,
         (element, data) => {
-            const modelElement = element.querySelector('h5.headerLabelForModel');
-            const sizeElement = element.querySelector('.Size');
-            if (
-                modelElement &&
-                sizeElement &&
-                modelElement.textContent === data.Model &&
-                sizeElement.textContent === data.Size
-            ) {
-                const kyzArea = element.querySelector('.kyzArea');
-                kyzArea.textContent = data.Crypto;
+            // Находим .kyzArea внутри <li>
+            const kyzArea = element.querySelector('.kyzArea');
 
-                // Сохраняем tableName и id в data-атрибутах
-                kyzArea.setAttribute('data-id', data.id);
-                kyzArea.setAttribute('data-table-name', data.tableName);
-
-                return true;
+            if (!kyzArea) {
+                console.warn("Элемент .kyzArea не найден в товаре:", element);
+                return false;
             }
-            return false;
+
+            // Применяем КИЗ
+            kyzArea.textContent = data.Crypto;
+            kyzArea.setAttribute('data-id', data.id);
+            kyzArea.setAttribute('data-table-name', data.tableName);
+
+            console.log(`КИЗ успешно применён для товара ${data.Model} / ${data.Size}`);
+            return true;
         }
     );
 }

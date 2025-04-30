@@ -85,50 +85,49 @@ app.get('/getWBSize', async (req, res) => {
 });
 
 // Обработка запроса KYZ
-async function fetchKyzRecords(tableName, size, brand, model, count) {
-    const query = `
-        SELECT id, crypto, model, size 
-        FROM ${tableName}
-        WHERE size = ? AND brand = ? AND model = ? AND status IN ('Comeback', 'Waiting')
-        LIMIT ?
-    `;
-    const [rows] = await pool.execute(query, [size, brand, model, count]);
-    return rows;
-}
-
-async function reserveKyzRecords(tableName, rows) {
-    // console.log("KYZ update in:", tableName, rows);
-
-    // Формируем массив ID
-    const idsUpdateStatus = rows.map(row => row.id);
-
-    // Проверяем, есть ли записи для обновления
-    if (idsUpdateStatus.length === 0) {
-        console.log("Нет записей для обновления");
-        return;
-    }
-
-    // Логируем текущие статусы записей
-    console.log(`Текущие статусы записей:`, rows.map(row => ({ id: row.id })));
-
-    // SQL-запрос для обновления статуса
-    const updateQuery = `
-        UPDATE ${tableName} 
-        SET status = 'Reserved', user = 'Marketplace', date_used = NOW()
-        WHERE id IN (${idsUpdateStatus.map(() => '?').join(',')})
-        AND status IN ('Comeback', 'Waiting')
-    `;
+async function fetchAndReserveKyzRecords(pool, tableName, size, brand, model, count) {
+    const connection = await pool.getConnection();
 
     try {
-        const [result] = await pool.execute(updateQuery, idsUpdateStatus);
+        await connection.beginTransaction();
 
-        if (result.affectedRows > 0) {
-            console.log(`Статус успешно обновлен для записей: ${idsUpdateStatus}`);
-        } else {
-            console.log(`Ни одна запись не была обновлена для ID: ${idsUpdateStatus}`);
+        const selectQuery = `
+            SELECT id, crypto, model, size 
+            FROM ${connection.escapeId(tableName)}
+            WHERE size = ? AND brand = ? AND model = ? AND status IN ('Comeback', 'Waiting')
+            LIMIT ?
+        `;
+
+        const [rows] = await connection.execute(selectQuery, [size, brand, model, count]);
+
+        if (rows.length < count) {
+            await connection.rollback();
+            return { success: false, error: `Не хватает записей: требуется ${count}, найдено ${rows.length}` };
         }
+
+        const ids = rows.map(r => r.id);
+
+        const updateQuery = `
+            UPDATE ${connection.escapeId(tableName)}
+            SET status = 'Reserved', user = 'Marketplace', date_used = NOW()
+            WHERE id IN (${ids.map(() => '?').join(',')})
+        `;
+
+        const [result] = await connection.execute(updateQuery, ids);
+
+        if (result.affectedRows !== ids.length) {
+            await connection.rollback();
+            return { success: false, error: `Не все записи были обновлены: ${result.affectedRows}/${ids.length}` };
+        }
+
+        await connection.commit();
+        return { success: true, data: rows };
+
     } catch (err) {
-        console.error(`Ошибка при обновлении статуса:`, err.message);
+        await connection.rollback();
+        return { success: false, error: err.message };
+    } finally {
+        connection.release();
     }
 }
 
@@ -141,16 +140,21 @@ app.get('/kyz', async (req, res) => {
 
     try {
         const tableName = await getCategoryByModel(model, brand, size);
-        // console.log(`KYZ Request: size=${size}, brand=${brand}, model=${model}, count=${count}`);
-        // console.log(`KYZ Table: ${tableName}`);
+        console.log(`KYZ Request: size=${size}, brand=${brand}, model=${model}, count=${count}`);
+        console.log(`KYZ Table: ${tableName}`);
 
-        const rows = await fetchKyzRecords(tableName, size, brand, model, count);
-        // console.log(`KYZ Records Found: ${rows.length}`);
+        const result = await fetchAndReserveKyzRecords(pool, tableName, size, brand, model, count);
 
-        await reserveKyzRecords(tableName, rows);
+        if (!result.success) {
+            console.error("Ошибка при резервировании:", result.error);
+            return res.status(500).json({ error: result.error });
+        }
+
+        const { data } = result;
+        console.log(`Статус успешно обновлен для записей: ${data.map(r => r.id)}`);
 
         res.json({
-            data: rows.map(row => ({
+            data: data.map(row => ({
                 Crypto: row.crypto,
                 Model: row.model,
                 Size: row.size,
@@ -158,6 +162,7 @@ app.get('/kyz', async (req, res) => {
                 tableName
             }))
         });
+
     } catch (error) {
         console.error('Error processing KYZ request:', error.message);
         res.status(500).json({ error: 'Internal Server Error' });
