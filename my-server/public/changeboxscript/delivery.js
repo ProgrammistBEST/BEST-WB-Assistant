@@ -1,28 +1,6 @@
 let statusProgramSS = localStorage.getItem('statusProgram');
 let statusProgramLoad = JSON.parse(statusProgramSS);
 
-(async () => {
-    try {
-        // Получение токена в зависимости от бренда
-        let token;
-        const statusProgramApp = localStorage.getItem('statusProgram');
-        const statusProgramLoadApp = JSON.parse(statusProgramApp);
-
-        if (statusProgramLoadApp.brand === 'Armbest') {
-            token = await getApiById(3, 'Armbest', 'WB');
-        } else if (statusProgramLoadApp.brand === 'Best26') {
-            token = await getApiById(9, 'Best26', 'WB');
-        } else if (statusProgramLoadApp.brand === 'BestShoes') {
-            token = await getApiById(6, 'Bestshoes', 'WB');
-        } else if (statusProgramLoadApp.brand === 'Arm2') {
-            token = await getApiById(17, 'Arm2', 'WB');
-        }
-    } catch (error) {
-        console.error('Ошибка при обработке токена:', error.message);
-    }
-})();
-
-
 function AddNewBoxButton() {
     let boxforContainer = document.querySelector('.sectionForAcceptDeliverynew')
     const list = document.createElement('ul');
@@ -106,7 +84,7 @@ function AddNewBoxButton() {
 
     const maxItemsinbox = document.createElement('p');
     maxItemsinbox.className = 'headerLabelForModel maxItemsinbox';
-    maxItemsinbox.textContent = 20
+    maxItemsinbox.textContent = 10
 
     const Itemsinbox = document.createElement('p');
     Itemsinbox.className = 'headerLabelForModel Itemsinbox';
@@ -122,7 +100,74 @@ function AddNewBoxButton() {
     container.addEventListener('dragend', handleDragEnd);
 }
 
-function Sendfordelivery() {
+function createNewBox(article, maxItems, stockClass) {
+    const container = document.createElement('div');
+    container.className = 'box mainbox Boxtransferredfordelivery';
+    container.classList.add(stockClass);
+    container.classList.add(statusProgram.NameDelivery);
+    container.classList.add(statusProgram.brand);
+
+    // Установка цвета фона в зависимости от бренда
+    if (statusProgram.brand == 'Armbest') {
+        container.style.backgroundColor = '#8dddbb';
+    } else if (statusProgram.brand == 'Best26') {
+        container.style.backgroundColor = 'rgb(169 169 220)';
+    } else if (statusProgram.brand == 'BestShoes') {
+        container.style.backgroundColor = '#C4E5FF';
+    } else if (statusProgram.brand == 'Arm2') {
+        container.style.backgroundColor = '#FCB996';
+    }
+
+    // Создание заголовка коробки
+    const header = document.createElement('h3');
+    header.className = 'p_article_put_order_in_box';
+    header.textContent = article;
+    container.appendChild(header);
+
+    // Кнопка удаления
+    const deletBox = document.createElement('div');
+    deletBox.className = 'deleteBox';
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'deleteBoxButton';
+    deleteButton.textContent = 'X';
+    deletBox.appendChild(deleteButton);
+    container.appendChild(deletBox);
+    deletBox.addEventListener('click', function () {
+        deleteBox(deletBox);
+    });
+
+    // Создание списка <ul> для товаров
+    const list = document.createElement('ul');
+    container.appendChild(list);
+    list.style = 'height: 100%;'
+
+    // Добавление счетчиков
+    const Itemsinbox = document.createElement('p');
+    Itemsinbox.className = 'headerLabelForModel Itemsinbox';
+    Itemsinbox.textContent = 0;
+
+    const maxItemsinbox = document.createElement('p');
+    maxItemsinbox.className = 'headerLabelForModel maxItemsinbox';
+    maxItemsinbox.textContent = maxItems;
+
+    const StockArea = document.createElement('p');
+    StockArea.className = 'StockArea';
+    StockArea.textContent = stockClass === 'first' ? 'Первый' : stockClass === 'second' ? 'Второй' : 'Третий';
+
+    container.appendChild(Itemsinbox);
+    container.appendChild(maxItemsinbox);
+    container.appendChild(StockArea);
+
+    // Добавление обработчиков событий
+    container.addEventListener('dragover', dragOverHandler);
+    container.addEventListener('drop', drop);
+    container.addEventListener('dragstart', handleDragStart);
+    container.addEventListener('dragend', handleDragEnd);
+
+    return container;
+}
+
+function SendForDelivery() {
 
     let boxcountInPanel = 0;
 
@@ -201,6 +246,7 @@ function Sendfordelivery() {
 
         let currentItems = parseInt(box.querySelector('.Itemsinbox').textContent);
         let maxItems = parseInt(box.querySelector('.maxItemsinbox').textContent);
+        let article = box.querySelector('.headerLabelForModel').textContent;
         let firststockClass;
 
         if (currentItems == maxItems && !arrayMerged.includes(box)) {
@@ -212,17 +258,49 @@ function Sendfordelivery() {
         }
 
         if (box.classList.contains('firstStock')) {
-            firststockClass = 'first'
+            firststockClass = 'first';
+        } else if (box.classList.contains('secondStock')) {
+            firststockClass = 'second';
+        } else if (box.classList.contains('thirdStock')) {
+            firststockClass = 'third';
+        } else {
+            console.error('Неизвестный класс склада:', box);
+            return;
         }
-        else if (box.classList.contains('secondStock')) {
-            firststockClass = 'second'
-        }
-        else if (box.classList.contains('thirdStock')) {
-            firststockClass = 'third'
-        }
-        else {
-            alert('Что вы мне подсунули?')
-            console.log(box)
+    
+        if (currentItems > maxItems) {
+            let excessItems = currentItems - maxItems;
+        
+            while (excessItems > 0) {
+        
+                // Создаем новую коробку
+                const newBox = createNewBox(article, maxItems, 'thirdStock');
+        
+                // Определяем, сколько товаров нужно переместить
+                const itemsToMoveCount = Math.min(excessItems, maxItems);
+                const allItemsInBox = Array.from(box.querySelectorAll('ul li'));
+                const itemsToMove = allItemsInBox.slice(-itemsToMoveCount);
+        
+                if (itemsToMove.length === 0) {
+                    console.error(`[ERROR] Не удалось выбрать товары для перемещения. Прерываем цикл.`);
+                    break;
+                }
+        
+                // Перемещаем товары в новую коробку
+                const newUl = newBox.querySelector('ul');
+                itemsToMove.forEach(item => {
+                    newUl.appendChild(item);
+                });
+        
+                // Обновляем данные
+                excessItems -= itemsToMove.length;
+                currentItems -= itemsToMove.length; // Уменьшаем текущее количество товаров в исходной коробке
+                box.querySelector('.Itemsinbox').textContent = currentItems;
+                newBox.querySelector('.Itemsinbox').textContent = itemsToMove.length;
+        
+                // Добавляем новую коробку в DOM
+                document.querySelector('.sectionForAcceptDeliverynew').appendChild(newBox);
+            }
         }
         if (currentItems != maxItems) {
             firstBoxMerge = box;
@@ -566,8 +644,6 @@ function getModelData(brand) {
 
         const key = `${model}-${size}`; // Уникальный ключ для модели и размера
 
-        console.log(`[getModelData] Обработан элемент ${index}: model=${model}, size=${size}, key=${key}`);
-
         // Группируем данные
         if (!modelMap[key]) {
             modelMap[key] = { model, size, count: 1 };
@@ -577,7 +653,6 @@ function getModelData(brand) {
     });
 
     const result = Object.values(modelMap);
-    console.log('[getModelData] Итоговые данные моделей:', result);
 
     return result;
 }
@@ -587,15 +662,12 @@ async function fetchKyzElements(modelInfo, brand) {
     try {
         const { model, size, count } = modelInfo;
 
-        console.log(`[fetchKyzElements] Параметры запроса: size=${size}, brand=${brand}, model=${model}, count=${count}`);
-
         if (!size || !brand || !model || !count) {
             console.error('[fetchKyzElements] Некорректные параметры запроса:', { size, brand, model, count });
             return { size, model, kyzElements: [] };
         }
 
         const url = `/kyz?size=${size}&brand=${brand}&model=${model}&count=${count}`;
-        console.log(`[fetchKyzElements] Запрос КИЗов: ${url}`);
 
         const response = await fetch(url, { method: 'GET' });
 
@@ -605,7 +677,6 @@ async function fetchKyzElements(modelInfo, brand) {
         }
 
         const data = await response.json();
-        console.log(`[fetchKyzElements] Ответ сервера для size=${size}, model=${model}:`, data);
 
         return {
             size,
@@ -627,25 +698,16 @@ async function fetchKyzElements(modelInfo, brand) {
 // Общая функция для обновления DOM
 function updateDOM(results, selectorFactory, updateLogic) {
     results.forEach((result, index) => {
-        console.log(`[updateDOM] Обработка результата ${index}: size=${result.size}, model=${result.model}`);
 
         // Получаем селектор на основе model + size
         const selector = selectorFactory(result);
 
         // Ищем все элементы по этому селектору
         const elements = document.querySelectorAll(selector);
-        console.log(`[updateDOM] Найдено элементов для size=${result.size}, model=${result.model}:`, elements.length);
 
         // Применяем логику обновления к каждому найденному элементу
         elements.forEach((element, idx) => {
             const data = result.kyzElements[idx];
-            console.log(`[updateDOM] Обработка элемента ${idx}:`, { element, data });
-
-            if (data && updateLogic(element, data)) {
-                console.log(`[updateDOM] Элемент успешно обновлен:`, { element, data });
-            } else {
-                console.warn(`[updateDOM] Не удалось обновить элемент:`, { element, data });
-            }
         });
     });
 }
@@ -669,8 +731,6 @@ function updateDOMForBest26(results) {
             kyzArea.textContent = data.Crypto;
             kyzArea.setAttribute('data-id', data.id);
             kyzArea.setAttribute('data-table-name', data.tableName);
-
-            console.log(`КИЗ успешно применён для товара ${data.Model} / ${data.Size}`);
             return true;
         }
     );
@@ -701,7 +761,6 @@ function updateDOMForOtherBrands(results) {
 // Главная функция
 async function addKyzForModelsToDilivery() {
     const brand = statusProgram.brand;
-    console.log(`Бренд: ${brand}`);
 
     const models = getModelData(brand);
     console.log('Данные моделей:', models);
