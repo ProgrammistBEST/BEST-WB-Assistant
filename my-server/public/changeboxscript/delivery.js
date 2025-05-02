@@ -712,6 +712,20 @@ function updateDOM(results, selectorFactory, updateLogic) {
     });
 }
 
+// Общая функция для обновления DOM
+function updateDOMForOther(results, selectorFactory, updateLogic) {
+    results.forEach((result) => {
+        const elements = document.querySelectorAll(selectorFactory(result));
+        elements.forEach((element, index) => {
+            const data = result.kyzElements[index];
+            if (data && updateLogic(element, data)) {
+                // Если логика обновления успешна, продолжаем
+                return;
+            }
+        });
+    });
+}
+
 // Функция для обновления DOM для бренда Best26
 function updateDOMForBest26(results) {
     updateDOM(
@@ -738,7 +752,7 @@ function updateDOMForBest26(results) {
 
 // Функция для обновления DOM для других брендов
 function updateDOMForOtherBrands(results) {
-    updateDOM(
+    updateDOMForOther(
         results,
         ({ size }) => `.sectionForAcceptDeliverynew .kyzArea[data-size="${size}"]`,
         (element, data) => {
