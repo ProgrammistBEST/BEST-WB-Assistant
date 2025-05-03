@@ -697,17 +697,27 @@ async function fetchKyzElements(modelInfo, brand) {
 
 // Общая функция для обновления DOM
 function updateDOM(results, selectorFactory, updateLogic) {
-    results.forEach((result, index) => {
-
-        // Получаем селектор на основе model + size
+    results.forEach((result) => {
         const selector = selectorFactory(result);
-
-        // Ищем все элементы по этому селектору
         const elements = document.querySelectorAll(selector);
 
-        // Применяем логику обновления к каждому найденному элементу
+        console.log(`[updateDOM] Найдено элементов для селектора "${selector}":`, elements.length);
+        if (elements.length === 0) {
+            console.warn(`[updateDOM] Не найдены элементы для селектора: ${selector}`);
+            return;
+        }
+
+        if (result.kyzElements.length !== elements.length) {
+            console.warn(
+                `[updateDOM] Несоответствие количества элементов: найдено DOM-элементов=${elements.length}, получено КИЗов=${result.kyzElements.length}`
+            );
+        }
+
         elements.forEach((element, idx) => {
             const data = result.kyzElements[idx];
+            if (data && updateLogic(element, data)) {
+                return;
+            }
         });
     });
 }
