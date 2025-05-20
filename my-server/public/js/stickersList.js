@@ -7,44 +7,83 @@ let idordersArray = [];
 let cargoData = {};
 let DataForRemainings = {};
 
-// ПОСТАВКИ
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Функция экспоненциальной задержки
+function exponentialDelay(retryCount) {
+    const delayTime = Math.min(1000 * Math.pow(2, retryCount), 10000); // до 10 сек
+    return new Promise(resolve => setTimeout(resolve, delayTime));
+}
+
+// Обёртка для безопасного выполнения запроса с повторными попытками
+async function safeCall(fn, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (error.status === 429 && i < retries - 1) {
+                console.warn(`Попытка ${i + 1} завершена с 429. Ждём...`);
+                await exponentialDelay(i);
+                continue;
+            }
+            throw new Error(`Не удалось выполнить запрос после ${retries} попыток: ${error.message}`);
+        }
+    }
+}
+
+// Основная функция получения поставок
 async function getCargoes() {
 
-    let nextNumber = 0;
-    let limit = 500;
-    let deliveryList = [];
-    let ArrayForRemainings = [];
+    if (!token || token.trim() === '') {
+        console.error("Токен не установлен");
+        return;
+    }
 
-  while (true) {
-    let params2 = {
-        'limit' : limit,
-        'next' : nextNumber,
-        }
+    let nextNumber = 0;
+    let limit = 100;
+    let deliveryList = [];
+
+    while (true) {
+        let params2 = {
+            'limit': limit,
+            'next': nextNumber,
+        };
+
         const urlWithParams2 = new URL(apiUrl2);
         Object.keys(params2).forEach(key => urlWithParams2.searchParams.append(key, params2[key]));
 
         try {
             const response = await fetch(urlWithParams2, {
-            method: "GET",
-            headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            },
-        });
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
 
-        if (!response.ok) {
-            console.log("Ошибка HTTP: " + response.status);
-        }
-        
-        let items = await response.json();
-        console.log(items)
-        nextNumber = items.next
-        if (nextNumber == 0){
-            break
-        }
-        Object.values(items.supplies).forEach(value => {
-            if (value.done == false) {
-                if (value.name == statusProgram.NameDelivery) {
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Ошибка HTTP:", response.status, errorText);
+
+                // Генерируем ошибку, чтобы триггернуть retry в safeCall
+                const error = new Error(`HTTP ошибка: ${response.status}`);
+                error.status = response.status;
+                throw error;
+            }
+
+            const items = await response.json();
+
+            nextNumber = items.next || 0;
+
+            if (!Array.isArray(items.supplies)) {
+                console.error("supplies отсутствует или не является массивом", items);
+                break;
+            }
+
+            items.supplies.forEach(value => {
+                if (!value.done && value.name === statusProgram.NameDelivery) {
                     deliveryList.push(value);
                     cargoData[value.id] = {
                         id: value.id,
@@ -53,43 +92,64 @@ async function getCargoes() {
                         orders: value.orders
                     };
                 }
-            }
-        })
+            });
+
+            if (nextNumber === 0) break;
+
+            await delay(10); // Задержка между пакетами поставок
+
         } catch (error) {
-        console.error("Ошибка при получении данных:", error);
+            console.error("Ошибка при получении данных:", error.message);
+            break;
         }
-  }
+    }
 
-    await Promise.all(deliveryList.map(async (order) => {
-        await getOrders(idordersArray, order.id);
-    }))
+    // Получение заказов по каждой поставке с защитой от 429
+    await Promise.all(deliveryList.map(async (order, index) => {
+        await safeCall(async () => {
+            await getOrders(idordersArray, order.id);
+        });
+    }));
 
-    await getStikers(idordersArray)
-    // console.log("Итоговый результат", cargoData)
+    await getStikers(idordersArray);
 }
 
 // ЗАКАЗЫ
 async function getOrders(arrayGetOrderId, supplyId) {
     const apiUrl5 = `https://marketplace-api.wildberries.ru/api/v3/supplies/${supplyId}/orders`;
+
     try {
         const response = await fetch(apiUrl5, {
             method: "GET",
             headers: {
-                'Authorization': token,
+                'Authorization': `Bearer ${token}`,
                 "Content-Type": "application/json"
             }
         });
+
         if (!response.ok) {
-            console.log("Ошибка HTTP: " + response.statusText);
+            const errorData = await response.json().catch(() => null);
+            console.error(`Ошибка HTTP при получении заказов для поставки ${supplyId}:`, {
+                status: response.status,
+                body: errorData
+            });
+            return;
         }
-        const items = await response.json(); 
-        cargoData[supplyId]['orders'] = items.orders
-        items.orders.forEach(ord => {
-            idordersArray.push(ord.id)
-        })
+
+        const items = await response.json();
+
+        if (items && Array.isArray(items.orders)) {
+            cargoData[supplyId]['orders'] = items.orders;
+
+            items.orders.forEach(ord => {
+                arrayGetOrderId.push(ord.id);
+            });
+        } else {
+            console.warn(`Поставка ${supplyId} не содержит orders или данные повреждены`);
+        }
 
     } catch (error) {
-        console.error("Ошибка при получении данных:", error);
+        console.error(`Ошибка при получении данных о заказах поставки ${supplyId}:`, error);
     }
 }
 
@@ -110,7 +170,6 @@ async function getStikers(cargoes) {
             const batchStart = page * batchSize;
             const batchEnd = (page + 1) * batchSize;
             const currentBatch = cargoes.slice(batchStart, batchEnd);
-            console.log(currentBatch)
 	    if (currentBatch.length == 0) {
 		break;
 	    };
@@ -161,5 +220,3 @@ async function getStikers(cargoes) {
         console.error("Error fetching data:", error);
     }
 }
-
-getCargoes()
