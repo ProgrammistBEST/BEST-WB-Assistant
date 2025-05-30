@@ -282,24 +282,48 @@ app.get('/files', (req, res) => {
 });
 
 // Эндпоинт для получения содержимого файла
-app.get('/file', (req, res) => {
+app.get('/file', async (req, res) => {
     const fileName = req.query.name;
     if (!fileName) {
         return res.status(400).json({ error: 'File name is required' });
     }
+
     const filePath = path.join(networkFolderPath, fileName);
-    fs.stat(filePath, (err, stat) => {
+
+    // Проверяем, существует ли файл
+    fs.stat(filePath, async (err, stat) => {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            if (err.code === 'ENOENT') {
+                // Файл не найден (ошибка 404)
+                try {
+                    // Создаем пустой PDF
+                    const pdfDoc = await PDFDocument.create();
+                    const pdfBytes = await pdfDoc.save();
+
+                    // Отправляем пустой PDF в ответе
+                    res.contentType('application/pdf');
+                    res.send(pdfBytes);
+                } catch (error) {
+                    console.error('Error creating empty PDF:', error);
+                    return res.status(500).json({ error: 'Failed to create empty PDF' });
+                }
+            } else {
+                // Другая ошибка
+                return res.status(500).json({ error: err.message });
+            }
         }
+
+        // Если файл существует, проверяем, является ли он директорией
         if (stat.isDirectory()) {
             return res.status(400).json({ error: 'Requested path is a directory' });
         }
+
+        // Читаем и отправляем содержимое файла
         fs.readFile(filePath, (err, data) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.contentType("application/pdf");
+            res.contentType('application/pdf');
             res.send(data);
         });
     });

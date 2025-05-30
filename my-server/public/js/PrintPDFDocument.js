@@ -84,6 +84,40 @@ function kyzUpdateStatus(id, tableName, dateNow) {
         });
 }
 
+async function fetchImage(url) {
+    try {
+        const response = await axios.get(url, {
+            responseType: 'arraybuffer', // Для получения бинарных данных (например, PDF или изображений)
+            timeout: 5000, // Таймаут в миллисекундах (5 секунд)
+        });
+
+        if (response.status === 200) {
+            return response.data; // Возвращаем данные файла
+        } else {
+            console.error(`Error fetching file: Status ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        if (error.response) {
+            // Обработка ошибок HTTP (например, 404)
+            if (error.response.status === 404) {
+                console.warn("File not found (404). Returning empty data.");
+                return null; // Возвращаем null для ошибки 404
+            } else {
+                console.error(`HTTP error: ${error.response.status}`);
+            }
+        } else if (error.code === 'ECONNABORTED') {
+            // Обработка таймаута
+            console.error("Request timed out.");
+        } else {
+            // Обработка других ошибок
+            console.error("Error fetching file:", error.message);
+        }
+        return null;
+    }
+}
+
+
 async function finishDocument(choosedVariant) {
     document.getElementById('loadscreen').style.display = 'flex'
     // startGame()
@@ -664,15 +698,15 @@ async function finishDocument(choosedVariant) {
             doc.addImage(img, 'PNG', 0, 1, 58, 38);
             doc.addPage([58, 40], 'landscape');
             try {
-                const response = await fetch(url);
+                const imageData = await fetchImage(url);
 
-                if (!response.ok) {
-                    throw new Error('Ошибка загрузки изображения');
+                if (imageData) {
+                    imagesBarckodePDF.push(imageData); // Добавляем данные в массив
+                } else {
+                    console.warn(`Failed to load image from URL: ${url}`);
                 }
-                const arrayBuffer = await response.arrayBuffer();
-                imagesBarckodePDF.push(arrayBuffer)
             } catch (error) {
-                console.error('Ошибка загрузки изображения:', error);
+                console.error('Ошибка при обработке изображения:', error);
             }
         }));
         const mergedPdf = await PDFDocument.create();
