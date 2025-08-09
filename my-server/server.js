@@ -68,7 +68,11 @@ app.get('/getWBSize', async (req, res) => {
 
     try {
         const [rows] = await pool.execute(
-            `SELECT size FROM products WHERE sku = ? AND company_name = ?`,
+            `SELECT s.size 
+            FROM models m
+            JOIN sizes s ON s.size_id = m.size_id
+            JOIN brands b ON b.brand_id = m.brand_id
+            WHERE m.sku = ? AND b.brand = ?`,
             [skus, brand]
         );
         if (rows.length > 0) {

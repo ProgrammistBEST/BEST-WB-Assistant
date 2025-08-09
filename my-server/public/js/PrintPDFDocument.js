@@ -477,8 +477,6 @@ async function finishDocument(choosedVariant) {
 
             if (match) {
                 extractedString = match[1];
-            } else {
-
             }
 
             const fileBrand = statusProgram.brand;
@@ -595,7 +593,11 @@ async function finishDocument(choosedVariant) {
                     const imageUrl = imagesKYZPDF;
                     imgKYZ.src = imageUrl;
                     canvas.remove()
-                    doc.addImage(imagesKYZPDF, 'JPEG', 0, 0, 58, 40, null, 'FAST');
+                    if (statusProgramLoadPrintPDFDOC.brand == 'BestShoes') {
+                        doc.addImage(imagesKYZPDF, 'JPEG', 2.2, 0, 58, 40, null, 'FAST');
+                    } else {
+                        doc.addImage(imagesKYZPDF, 'JPEG', 0, 0, 58, 40, null, 'FAST');
+                    }
                     if (statusProgramLoadPrintPDFDOC.brand == 'BestShoes') {
                         doc.setFillColor(255, 255, 255);
                         doc.rect(2, 2, 28, 25, 'F');
