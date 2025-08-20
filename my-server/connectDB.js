@@ -19,7 +19,7 @@ const userPool = mysql.createPool({
 // Проверка подключения к базе данных storagesigns
 pool.getConnection()
     .then((connection) => {
-        console.log('connectdb - Успешное подключение к базе данных MySQL: storagesigns');
+        console.log(`connectdb - Успешное подключение к базе данных MySQL: ${process.env.DB_NAME}`);
         connection.release();
     })
     .catch((err) => {
@@ -31,7 +31,7 @@ pool.getConnection()
 // Проверка подключения к базе данных bestserver
 userPool.getConnection()
     .then((connection) => {
-        console.log('connectdb - Успешное подключение к базе данных MySQL: bestserver');
+        console.log(`connectdb - Успешное подключение к базе данных MySQL: ${process.env.USER_DB_NAME}`);
         connection.release();
     })
     .catch((err) => {

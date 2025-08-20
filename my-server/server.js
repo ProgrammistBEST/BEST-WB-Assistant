@@ -351,6 +351,58 @@ app.get('/download', (req, res) => {
     });
 });
 
+app.get("/removeKYZReserves", async (req, res) => {
+  const brand = req.query.brand?.toLowerCase();
+  if (!brand) {
+    return res.status(400).json({ error: "Не передан параметр brand" });
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  let errors = [];
+
+  try {
+    const [categories] = await pool.query(
+      "SELECT DISTINCT category FROM model_categories"
+    );
+
+    const results = await Promise.allSettled(
+      categories.map(row => {
+        const tableName = `${brand}_${row.category}`;
+        return pool.query(
+          `UPDATE \`${tableName}\`
+           SET status = 'Comeback', locked = 0, date_used = NOW()
+           WHERE status = 'Reserved'`
+        ).then(([result]) => ({
+          table: tableName,
+          count: result.affectedRows
+        }));
+      })
+    );
+
+    for (const r of results) {
+      if (r.status === "fulfilled") {
+        successCount += r.value.count;
+      } else {
+        failCount++;
+        errors.push({
+          table: r.reason?.table || "unknown",
+          error: r.reason.message
+        });
+      }
+    }
+
+    res.json({
+      brand,
+      successCount,
+      failCount,
+      errors
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Ошибка при обработке", details: err.message });
+  }
+});
+
 // Запуск сервера
 app.listen(port, () => {
     console.log(`Сервер запущен на порту http://localhost:${port}/`);

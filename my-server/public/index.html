@@ -39,6 +39,9 @@
 			</div>
 		</div>
 	</div>
+	<div id="overlay">
+		⏳ Выполняется запрос... <span id="timer">0</span> сек
+	</div>
 	<div class="container">
 		<nav class="navbar navbar-expand-lg navbar-light" style="border-radius: 10px">
 			<a class="navbar-brand" href="#" style="color: black; font-weight: 500; font-size: 30px">Best
@@ -229,6 +232,9 @@
 			<button class="buttonInAsideForPost" id="DownloadInLocalStorageChanges" onclick="saveData()">
 				Сохранить данные
 			</button>
+			<button class="buttonInAsideForPost" id="RemoveKYZReserved" onclick="removeKYZReserved()">
+				Снять КИЗ с резервов
+			</button>
 			<button class="buttonInAsideForPost ClearLocalStorage">
 				Удалить данные
 			</button>
@@ -317,6 +323,7 @@
 	<script src="changeboxscript/delivery.js"></script>
 	<script src="js/appData.js"></script>
 	<script src="js/NewQuests.js"></script>
+	<script src="js/removeKYZReserved.js"></script>
 	<script src="changeboxscript/saveData.js"></script>
 	<script src="js/PrintPDFDocument.js"></script>
 	<script src="changeboxscript/UntileHonestSign.js"></script>
